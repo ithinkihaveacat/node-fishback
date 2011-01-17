@@ -1,8 +1,12 @@
 # About
 
-Fishback is an simple NodeJS-powere caching HTTP proxy.  There are many caching HTTP proxies; 
-the advantage of Fishback is that it will pre-emptively request resources before they expire, so that 
-content never expires, and all requests are fast.
+Fishback is an simple NodeJS-powered caching HTTP proxy.  It's almost completely RFC2616 compliant.
+
+# Bugs
+
+Entries are not removed from the cache.
+
+The code is bit messy.
 
 # Author
 
