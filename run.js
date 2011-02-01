@@ -1,6 +1,6 @@
 require.paths.unshift("lib");
 
-var fishback = require("fishback.js");
+var fishback = require("fishback");
 
 var server = fishback.createServer();
 
