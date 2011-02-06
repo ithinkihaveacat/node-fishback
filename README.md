@@ -1,10 +1,22 @@
-# About
+## About
 
-Fishback is an simple NodeJS-powered caching HTTP proxy.  It tries pretty hard to be RFC2616 compliant (and many of the slightly unusual features like `only-if-cached` and `max-stale` are supported, but there's probably some bugs.
+Fishback is an simple NodeJS-powered caching HTTP proxy.  It tries pretty hard to be RFC2616 compliant (and many of the slightly unusual features like `only-if-cached` and `max-stale` are supported), but there's probably some things it doesn't do right.
 
-It's likely to require node 0.3.7.
+It's likely to require node 0.3.7+.
 
-# Example
+## Bugs/Issues
+
+  * There's no https support.
+
+## Installation
+
+The simplest way is with `npm`:
+
+    $ npm install fishback
+
+This also creates a `fishback` executable that runs on 127.0.0.1:8080.
+
+## Example
 
     # Terminal #1
     $ node run.js 
@@ -33,13 +45,10 @@ In this case the cache is again used, because the client specifically permitted 
       HTTP/1.1 504 Gateway Time-out
       Connection: close
 
-The client only wanted a response if it was already in the cache, which in this case it wasn't.
+The client only wanted a response if it was already in the cache, which in this case it wasn't.  However, in this case, even though the 504 response is issued immediately, the full request is also made, in the background, so that subsequent requests will get the benefit of the cache:
 
-    $ http_proxy=http://127.0.0.1:8080/ wget -S -q -O - http://www.bbc.co.uk/favicon.ico > /dev/null
     $ http_proxy=http://127.0.0.1:8080/ wget -S -q -O - --header="cache-control: only-if-cached" http://www.bbc.co.uk/favicon.ico > /dev/null
 
-If we fetch in the normal way, and then re-issue the only-if-cached request, we get a cached response.
-
-# Author
+## Author
 
 Michael Stillwell <mjs@beebo.org>
