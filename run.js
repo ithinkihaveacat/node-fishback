@@ -1,3 +1,5 @@
+#!/usr/local/bin/node
+
 require.paths.unshift("lib");
 
 var fishback = require("fishback");
