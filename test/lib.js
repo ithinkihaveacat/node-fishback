@@ -7,6 +7,15 @@ var fishback = require("fishback");
 
 fishback.setVerbose(false);
 
+/**
+ * Asynchronous map function.  For each element of arr, fn(element, callback) is
+ * called, where callback receives the result.
+ *
+ * @param arr the array over which 
+ * @param fn function of the form function(n, callback)
+ * @param callback function of the form function(arr)
+ */
+
 function amap(arr, fn, callback) {
 
     // https://gist.github.com/846521
@@ -22,6 +31,11 @@ function amap(arr, fn, callback) {
     }
 
 }
+
+/**
+ * Creates an HTTP server, and a proxy sitting in front of it.  The server
+ * returns response for all requests.
+ */
 
 function Service(entry, server_port, proxy_port) {
 
@@ -46,6 +60,14 @@ function Service(entry, server_port, proxy_port) {
     this.proxy.listen(this.proxy_port);
 
 };
+
+/**
+ * Performs a request count times, collecting the results into an
+ * array which is then passed to callback.
+ * 
+ * @param count number of times to perform the request
+ * @param callback called when all requests have completed, with an array of the results
+ */
 
 Service.prototype.request = function(count, callback) {
 
@@ -75,14 +97,30 @@ Service.prototype.request = function(count, callback) {
 
 };
 
+/**
+ * Shuts down (i.e. closes) both the web server and the proxy in front
+ * of it.
+ */
+
 Service.prototype.shutdown = function() {
     this.server.close();
     this.proxy.close();
 };
 
+/**
+ * Creates an HTTP server, and a proxy sitting in front of it.  The server
+ * returns response for all requests.
+ */
+
 exports.createService = function(response, server_port, proxy_port) {
     return new Service(response, server_port, proxy_port);
 };
+
+/**
+ * Convenience function for checking whether expected matches actual.
+ * actual can contain headers not present in expected, but the reverse
+ * is not true.
+ */
 
 exports.responseEqual = function(actual, expected) {
     Object.keys(expected.headers).forEach(function (k) {
