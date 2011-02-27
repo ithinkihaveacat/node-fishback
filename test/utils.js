@@ -157,3 +157,19 @@ var fishback = require('fishback');
     });
 
 })();
+
+(function() {
+
+    var data = [
+        [ "", {} ],
+        [ "  ", {} ],
+        [ "foo=bar  ", { "foo": "bar" } ],
+        [ "foo=bar,baz", { "foo": "bar", "baz": undefined } ],
+        [ "   MAX-AGE=60,  private", { "max-age": 60, "private": undefined } ]
+    ];
+
+    data.forEach(function (d) {
+        assert.deepEqual(fishback.parseHeader(d[0]), d[1]);
+    })
+    
+})();
