@@ -13,6 +13,15 @@ fishback.setVerbose(false);
  * Asynchronous map function.  For each element of arr, fn(element, callback) is
  * called, where callback receives the result.
  *
+ * Example:
+ * 
+ *   function aadd(i, callback) {
+ *       callback(i + 1);
+ *   }
+ *
+ *   amap([ 2, 3, 4 ], aadd, console.log);
+ *   // -> [ 3, 4, 5 ]
+ *
  * @param arr the array over which 
  * @param fn function of the form function(n, callback)
  * @param callback function of the form function(arr)
@@ -80,7 +89,7 @@ Service.prototype.request = function(count, callback) {
     };
 
     amap(
-        new Array(count), // we just need an array count elements long
+        new Array(count), // values not used; this is just to satisfy amap()
         function (i, callback) {
             var actual = { statusCode: null, headers: { }, body: "" };
             http.get(options, function(res) {
