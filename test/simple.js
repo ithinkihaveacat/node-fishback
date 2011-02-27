@@ -1,4 +1,4 @@
-var lib = require('lib');
+var lib = require('./lib');
 
 var response = { headers: { "foo": "bar" }, body: "Hello, World" };
 

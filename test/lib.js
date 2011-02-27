@@ -1,3 +1,5 @@
+require.paths.unshift("../lib");
+
 var SERVER_PORT = 9080;
 var PROXY_PORT = SERVER_PORT + 1;
 

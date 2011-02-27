@@ -1,4 +1,4 @@
-var lib = require("lib");
+var lib = require("./lib");
 
 var response = { headers: { "cache-control": "max-age=60, public" }, body: "Hello, World" };
 var expected = [

@@ -1,6 +1,4 @@
-// Run via:
-//
-//   $ node test.js
+require.paths.unshift("../lib");
 
 var assert = require('assert');
 var fishback = require('fishback');
