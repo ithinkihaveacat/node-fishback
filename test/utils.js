@@ -11,7 +11,7 @@ var fishback = require('fishback');
         [ { }, false ],
         [ { "cache-control": "public" }, true ],
         [ { "cache-control": "s-maxage=7773, public, foo=bar" }, true ],
-        [ { "cache-control": "s-maxage=7773, private, foo=bar" }, true ],
+        [ { "cache-control": "s-maxage=7773, private, foo=bar" }, false ],
         [ { "cache-control": "s-maxage=7773, qqq=public, foo=bar" }, false ],
         [ { "expires": "Tue, 17 Jan 2012 00:49:02 GMT", "cache-control": "public, max-age=31536000" }, true ]
     ];
