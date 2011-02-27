@@ -44,6 +44,40 @@ function amap(arr, fn, callback) {
 }
 
 /**
+ * Passed array of async functions (i.e. whose last argument is a callback), and calls
+ * them in order.
+ *
+ * Example:
+ *
+ *   step([
+ *       function (i, callback) {
+ *           console.log("got ", i);
+ *           callback(7);
+ *       },
+ *       function (i, callback) {
+ *           console.log("got ", i);
+ *           callback();
+ *       }
+ *   ], 6);
+ *   // -> 6
+ *   // -> 7
+ *
+ * @param callback array of functions matching the signature function([arg]..., callback)
+ * @param [optional] obj argument to first function in callback
+ */
+
+function step(callback) {
+    
+    if (callback && callback.length != 0) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        callback[0].apply(null, args.concat(function() {
+            step.apply(null, [callback.slice(1)].concat(Array.prototype.slice.call(arguments)));
+        }));
+    }
+
+}
+
+/**
  * Creates an HTTP server, and a proxy sitting in front of it.  The server
  * returns response for all requests.
  */
@@ -139,3 +173,6 @@ exports.responseEqual = function(actual, expected) {
     });
     assert.equal(actual.body, expected.body);
 };
+
+exports.amap = amap;
+exports.step = step;
