@@ -2,11 +2,11 @@
 
 Fishback is an simple NodeJS-powered caching HTTP proxy.  It tries pretty hard to be RFC2616 compliant (and many of the slightly unusual features like `only-if-cached` and `max-stale` are supported), but there's probably some things it doesn't do right.
 
-It's likely to require node 0.3.7+.
+It's been tested under node 0.4.0, and is likely to require node 0.3.7+.
 
 ## Bugs/Issues
 
-  * There's no https support.
+  * There's no HTTPS support.
 
 ## Installation
 
