@@ -35,6 +35,22 @@ lib.step([
 
     },
 
+    // No cache misses
+    function (callback) {
+
+        Date.prototype.getTime = function() {
+            return NOW + 30000;
+        }
+
+        service.request(expected_hit.length, function (actual) {
+            for (var i = 0; i < actual.length; i++) {
+                lib.responseEqual(actual[i], expected_hit[i]);
+            }
+            callback();
+        });
+
+    },
+
     // Should get a cache miss the first time, because we're 120 seconds
     // on.
     function (callback) {
