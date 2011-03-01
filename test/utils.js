@@ -2,6 +2,69 @@ require.paths.unshift("../lib");
 
 var assert = require('assert');
 var fishback = require('fishback');
+var lib = require('./lib');
+
+(function() {
+
+    assert.doesNotThrow(function () {
+        lib.step([]); 
+    });
+
+    assert.throws(function () {
+        lib.step([1]);
+    });
+
+})();
+
+(function() {
+
+    var a = [];
+
+    lib.step([
+        function (callback) {
+            a.push(1);
+            callback(null, "a");
+        },
+        function (s, callback) {
+            a.push(s);
+            a.push(2);
+            callback(null, "b");
+        },
+        function (s, callback) {
+            a.push(s);
+            a.push(3);
+            callback(null, "c");
+        },
+        function (s, callback) {
+            assert.equal(s, "c");
+            assert.deepEqual(a, [1, "a", 2, "b", 3]);
+        }
+    ]);
+    
+})();
+
+(function() {
+
+    var a = [];
+
+    lib.step(
+        [
+            function (callback) {
+                a.push(1);
+                callback("ooops", "a");
+            },
+            function (s, callback) {
+                // This shouldn't be called, because previous function returned error
+                a.push(s);
+                a.push(2);
+            }
+        ], function (err) {
+            assert.equal(err, "ooops");
+            assert.deepEqual(a, [ 1 ]);
+        }
+    );
+    
+})();
 
 (function(){
 

@@ -52,26 +52,32 @@ function amap(arr, fn, callback) {
  *   step([
  *       function (i, callback) {
  *           console.log("got ", i);
- *           callback(7);
+ *           callback(null, 7);
  *       },
  *       function (i, callback) {
  *           console.log("got ", i);
  *           callback();
  *       }
- *   ], 6);
- *   // -> 6
- *   // -> 7
+ *   ], null, 6);
+ *   // -> got 6
+ *   // -> got 7
  *
- * @param callback array of functions matching the signature function([arg]..., callback)
- * @param [optional] obj argument to first function in callback
+ * @param tasks array of functions with arguments ([arg]..., callback); callback has arguments (err, arg...)
+ * @param [optional] errback called if any of the tasks returns an error
+ * @param [optional] arg... arguments to the first task
  */
 
-function step(callback) {
+function step(tasks, errback) {
     
-    if (callback && callback.length != 0) {
-        var args = Array.prototype.slice.call(arguments, 1);
-        callback[0].apply(null, args.concat(function() {
-            step.apply(null, [callback.slice(1)].concat(Array.prototype.slice.call(arguments)));
+    if (tasks && tasks[0]) {
+        var args = Array.prototype.slice.call(arguments, 2);
+        tasks[0].apply(null, args.concat(function() {
+            var args = Array.prototype.slice.call(arguments);
+            if (args[0] && errback) {
+                errback(args[0]); // error returned, abort tasks
+            } else {
+                step.apply(null, [tasks.slice(1)].concat(errback, args.slice(1)));
+            }
         }));
     }
 
