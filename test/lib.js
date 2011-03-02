@@ -71,10 +71,10 @@ function step(tasks, errback) {
     
     if (tasks && tasks[0]) {
         var args = Array.prototype.slice.call(arguments, 2);
-        tasks[0].apply(null, args.concat(function() {
+        tasks[0].apply(null, args.concat(function() { // Note: exception thrown if tasks[0] not a function
             var args = Array.prototype.slice.call(arguments);
             if (args[0] && errback) {
-                errback(args[0]); // error returned, abort tasks
+                errback(args[0]); // error returned, abort tasks (Note: exception thrown if errback not a function)
             } else {
                 step.apply(null, [tasks.slice(1)].concat(errback, args.slice(1)));
             }
