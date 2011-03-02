@@ -67,6 +67,11 @@ function amap(arr, fn, callback) {
  * @param [optional] arg... arguments to the first task
  */
 
+// Libraries that do similar things:
+//
+// https://github.com/creationix/step
+// https://github.com/caolan/async
+
 function step(tasks, errback) {
     
     if (tasks && tasks[0]) {
