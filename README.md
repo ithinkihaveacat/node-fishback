@@ -1,12 +1,12 @@
 ## About
 
-Fishback is an simple NodeJS-powered caching HTTP proxy.  It tries pretty hard to be RFC2616 compliant (and many of the slightly unusual features like `only-if-cached` and `max-stale` are supported), but there's probably some things it doesn't do right.
+Fishback is an simple NodeJS-powered caching HTTP proxy.  It tries pretty hard to be RFC2616 compliant (and many of the slightly unusual features like `only-if-cached` and `max-stale` are supported), but there's probably some things it doesn't do completely correctly.  (Any variation from RFC2616 should be considered a bug.)
 
-It's been tested under node 0.4.0, and is likely to require node 0.3.7+.
+It's been tested under node 0.4.1, and is likely to require node 0.3.7+.
 
-## Bugs/Issues
+## `only-if-cached`
 
-  * There's no HTTPS support.
+If a request includes the [`only-if-cached`](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4) header, then the client receives a 504 response.  However, the proxy also issues the request to the origin server in the background, storing the returned content in the cache if possible so that subsequent requests can be fulfilled by the cache.
 
 ## Installation
 
@@ -14,9 +14,15 @@ The simplest way is with `npm`:
 
     $ npm install fishback
 
-This also creates a `fishback` executable that runs on 127.0.0.1:8080.
+This also creates a `fishback` executable that runs on `127.0.0.1:8080`.
 
-## Example
+Note that `fishback` has no dependencies (`npm` does not need to install any other modules), so you can also run it directly from a git working copy:
+
+    $ git clone https://github.com/ithinkihaveacat/node-fishback.git
+    $ cd node-fishback
+    $ node run.js
+
+## Examples
 
     # Terminal #1
     $ node run.js 
@@ -49,6 +55,12 @@ The client only wanted a response if it was already in the cache, which in this 
 
     $ http_proxy=http://127.0.0.1:8080/ wget -S -q -O - --header="cache-control: only-if-cached" http://www.bbc.co.uk/favicon.ico > /dev/null
 
+## Bugs/Issues
+
+  * There's no HTTPS support.  (This will be fixed shortly.)
+  * If the proxy server is able to read from the origin faster than the client can receive data, content needs to be buffered, either by node or the kernel.  (This can be fixed by backing off when `write()` returns false, and resuming only when the ["drain" event](http://nodejs.org/docs/v0.4.1/api/all.html#event_drain_) is triggered.  This is only likely to be a problem if you're streaming very large files through node.)
+
 ## Author
 
-Michael Stillwell <mjs@beebo.org>
+Michael Stillwell 
+<mjs@beebo.org>
