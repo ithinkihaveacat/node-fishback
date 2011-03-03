@@ -59,6 +59,7 @@ The client only wanted a response if it was already in the cache, which in this 
 
   * There's no HTTPS support.  (This will be fixed shortly.)
   * If the proxy server is able to read from the origin faster than the client can receive data, content needs to be buffered, either by node or the kernel.  (This can be fixed by backing off when `write()` returns false, and resuming only when the ["drain" event](http://nodejs.org/docs/v0.4.1/api/all.html#event_drain_) is triggered.  This is only likely to be a problem if you're streaming very large files through node.)
+  * ETags (and `must-revalidate`) are not supported.  (You don't get incorrect results; you just need retrieve the entire resource from the origin each time.)
 
 ## Author
 
