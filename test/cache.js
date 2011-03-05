@@ -1,4 +1,8 @@
+// Tests for the caching capability
+
 var lib = require("./lib");
+
+//require("fishback").setVerbose(true);
 
 var NOW = 198025200000;
 
