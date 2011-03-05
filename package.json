@@ -1,13 +1,14 @@
 {
     "name": "fishback",
     "description": "Simple RFC2616-compliant caching proxy server",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "homepage": "https://github.com/ithinkihaveacat/node-fishback",
     "repository": "git://github.com/ithinkihaveacat/node-fishback.git",
     "author": "Michael Stillwell <mjs@beebo.org> (http://beebo.org/)",
     "main": "./lib/fishback",
     "bin": {
-        "fishback": "./run.js"
+        "fishback-reverse": "./fishback-reverse.js",
+        "fishback-standalone": "./fishback-standalone.js"
     },
     "directories": {
         "lib": "./lib"
