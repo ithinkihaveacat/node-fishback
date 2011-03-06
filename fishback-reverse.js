@@ -12,6 +12,7 @@ var fishback = require("fishback");
 var server = fishback.createServer();
 
 server.addReqFilter(function (req) {
+    // Can switch backend servers based on URL, etc.
     req.url = "http://localhost" + req.url;
 });
 
