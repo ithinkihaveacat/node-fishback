@@ -6,7 +6,7 @@ It's been tested under node 0.4.1, and is likely to require node 0.3.7+.
 
 ## `only-if-cached`
 
-If a request includes the [`only-if-cached`](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4) header, then the client receives a 504 response.  However, the proxy also issues the request to the origin server in the background, storing the returned content in the cache if possible so that subsequent requests can be fulfilled by the cache.
+If the `Cache-Control` header of a request includes the [`only-if-cached`](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4) header, then the client receives a 504 response, as mandated by the RFC.  However, the proxy also issues the request to the origin server in the background, storing the returned content in the cache if possible so that subsequent requests can be fulfilled by the cache.
 
 ## Installation
 
@@ -25,8 +25,8 @@ Note that `fishback` has no dependencies (`npm` does not need to install any oth
 ## Examples
 
     # Terminal #1
-    $ node run.js 
-    Proxy server is running on 127.0.0.1:8080
+    $ fishback-standalone 
+    Proxy server is running on localhost:8080
     
     # Terminal #2
     # Request #1
@@ -57,7 +57,7 @@ The client only wanted a response if it was already in the cache, which in this 
 
 ## Bugs/Issues
 
-  * There's no HTTPS support.  (This will be fixed shortly.)
+  * There's no HTTPS support.
   * If the proxy server is able to read from the origin faster than the client can receive data, content needs to be buffered, either by node or the kernel.  (This can be fixed by backing off when `write()` returns false, and resuming only when the ["drain" event](http://nodejs.org/docs/v0.4.1/api/all.html#event_drain_) is triggered.  This is only likely to be a problem if you're streaming very large files through node.)
   * ETags (and `must-revalidate`) are not supported.  (You don't get incorrect results; you just need retrieve the entire resource from the origin each time.)
 
