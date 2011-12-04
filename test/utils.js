@@ -1,7 +1,5 @@
-require.paths.unshift("../lib");
-
 var assert = require('assert');
-var fishback = require('fishback');
+var fishback = require('../lib/fishback');
 var lib = require('./lib');
 
 (function() {

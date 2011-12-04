@@ -1,11 +1,9 @@
-require.paths.unshift("../lib");
-
 var SERVER_PORT = 9080;
 var PROXY_PORT = SERVER_PORT + 1;
 
 var assert = require("assert");
 var http = require("http");
-var fishback = require("fishback");
+var fishback = require("../lib/fishback");
 
 fishback.setVerbose(false);
 
@@ -93,14 +91,29 @@ function step(tasks, errback) {
  * returns response for all requests.
  */
 
-function Service(entry, server_port, proxy_port) {
+function Service(entry, callback) {
 
-    this.server_port = server_port || SERVER_PORT;
-    this.proxy_port  = proxy_port  || PROXY_PORT;
+    this.server_port = SERVER_PORT;
+    this.proxy_port  = PROXY_PORT;
 
     var headers = Object.keys(entry.headers).map(function (k) {
         return [ k, entry.headers[k] ];
     });
+
+    // Kinda ugly hack: listen() doesn't block (I'm pretty sure it did
+    // previously); instead we get a callback when the port is open.  
+    // Unfortunately, we need to wait until both ports are open (on the 
+    // proxy server *and* the backend server, so we have this ugly
+    // closure that essentially waits to be called twice. 
+
+    var block = (function (service) {
+        var i = 2;
+        return function () {
+            if (--i == 0) {
+                callback(service);
+            }
+        }
+    })(this);
 
     if (!entry.statusCode) {
         entry.statusCode = 200;
@@ -110,10 +123,10 @@ function Service(entry, server_port, proxy_port) {
         res.writeHead(entry.statusCode, headers);
         res.end(entry.body);
     });
-    this.server.listen(this.server_port);
+    this.server.listen(this.server_port, block);
 
     this.proxy = fishback.createServer();
-    this.proxy.listen(this.proxy_port);
+    this.proxy.listen(this.proxy_port, block);
 
 };
 
@@ -132,6 +145,8 @@ Service.prototype.request = function(count, callback) {
         port: this.proxy_port,
         path: 'http://127.0.0.1:' + this.server_port + '/'
     };
+
+//    console.log("qqqqqq");
 
     amap(
         new Array(count), // values not used; this is just to satisfy amap()
@@ -168,8 +183,8 @@ Service.prototype.shutdown = function() {
  * returns response for all requests.
  */
 
-exports.createService = function(response, server_port, proxy_port) {
-    return new Service(response, server_port, proxy_port);
+exports.createService = function(response, callback) {
+    return new Service(response, callback);
 };
 
 /**
