@@ -7,9 +7,7 @@
  * changes the "private" cache-control directive to "public".
  */
 
-require.paths.unshift("lib");
-
-var fishback = require("fishback");
+var fishback = require("./lib/fishback");
 
 var server = fishback.createServer();
 

@@ -5,9 +5,7 @@
  * put in front of a HTTP server, to deliver cached responses to clients.
  */
 
-require.paths.unshift("lib");
-
-var fishback = require("fishback");
+var fishback = require("./lib/fishback");
 
 var server = fishback.createServer();
 
