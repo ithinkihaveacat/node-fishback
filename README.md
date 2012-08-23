@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/ithinkihaveacat/node-fishback.png)](http://travis-ci.org/ithinkihaveacat/node-fishback)
 ## About
 
 Fishback is an simple NodeJS-powered caching HTTP proxy.  It tries pretty hard to be RFC2616 compliant (and many of the slightly unusual features like `only-if-cached` and `max-stale` are supported), but there's probably some things it doesn't do completely correctly.  (Any variation from RFC2616 should be considered a bug.)
