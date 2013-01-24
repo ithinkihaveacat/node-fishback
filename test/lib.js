@@ -9,7 +9,9 @@ fishback.setVerbose(false);
 
 /**
  * Asynchronous map function.  For each element of arr, fn(element, callback) is
- * called, where callback receives the result.
+ * called, where callback receives the result.  Note that the individual "maps"
+ * are performed sequentially; the result, however, is delivered to a callback,
+ * instead of being returned, and the maps can be asynchronous.
  *
  * Example:
  * 
@@ -87,66 +89,20 @@ function step(tasks, errback) {
 }
 
 /**
- * Creates an HTTP server, and a proxy sitting in front of it.  The server
- * returns response for all requests.
- */
-
-function Service(entry, callback) {
-
-    this.server_port = SERVER_PORT;
-    this.proxy_port  = PROXY_PORT;
-
-    var headers = Object.keys(entry.headers).map(function (k) {
-        return [ k, entry.headers[k] ];
-    });
-
-    // Kinda ugly hack: listen() doesn't block (I'm pretty sure it did
-    // previously); instead we get a callback when the port is open.  
-    // Unfortunately, we need to wait until both ports are open (on the 
-    // proxy server *and* the backend server, so we have this ugly
-    // closure that essentially waits to be called twice. 
-
-    var block = (function (service) {
-        var i = 2;
-        return function () {
-            if (--i == 0) {
-                callback(service);
-            }
-        }
-    })(this);
-
-    if (!entry.statusCode) {
-        entry.statusCode = 200;
-    }
-
-    this.server = http.createServer(function (req, res) {
-        res.writeHead(entry.statusCode, headers);
-        res.end(entry.body);
-    });
-    this.server.listen(this.server_port, block);
-
-    this.proxy = fishback.createServer();
-    this.proxy.listen(this.proxy_port, block);
-
-};
-
-/**
  * Performs a request count times, collecting the results into an
  * array which is then passed to callback.
  * 
  * @param count number of times to perform the request
- * @param callback called when all requests have completed, with an array of the results
+ * @param callback called when all requests have completed, with an array of the
+ *     results
  */
-
-Service.prototype.request = function(count, callback) {
+function request(count, callback) {
 
     var options = {
-        host: '127.0.0.1',
-        port: this.proxy_port,
-        path: 'http://127.0.0.1:' + this.server_port + '/'
+        host: '0.0.0.0',
+        port: PROXY_PORT,
+        path: '/'
     };
-
-//    console.log("qqqqqq");
 
     amap(
         new Array(count), // values not used; this is just to satisfy amap()
@@ -169,6 +125,92 @@ Service.prototype.request = function(count, callback) {
 };
 
 /**
+ * @param  {object}   req
+ * @param  {Function} callback
+ */
+function knock(req, callback) {
+    var res = { };
+    Object.keys(req).forEach(function (k) {
+        req[k](function () {
+            var args = Array.prototype.slice.call(arguments);
+            res[k] = args.length == 1 ? args[0] : args;
+            if (Object.keys(res).length == Object.keys(req).length) {
+                callback(res);
+            }
+        });
+    });
+}
+
+/**
+ * @param {object} entry
+ * @param {int} port
+ * @param {Function} callback
+ */
+function getStatic(entry, port, callback) {
+    port = port || SERVER_PORT;
+
+    if (!entry.statusCode) {
+        entry.statusCode = 200;
+    }
+
+    var headers = Object.keys(entry.headers).map(function (k) {
+        return [ k, entry.headers[k] ];
+    });
+
+    var server = http.createServer(function (req, res) {
+        res.writeHead(entry.statusCode, headers);
+        res.end(entry.body);
+    });
+
+    server.listen(port, function () {
+        callback(server);
+    });
+};
+
+/**
+ * Creates an HTTP server, and a proxy sitting in front of it.  The server
+ * returns response for all requests.
+ */
+
+function Service(cache, entry, callback) {
+
+    this.server_port = SERVER_PORT;
+    this.proxy_port  = PROXY_PORT;
+
+    var headers = Object.keys(entry.headers).map(function (k) {
+        return [ k, entry.headers[k] ];
+    });
+
+    // Kinda ugly hack: listen() doesn't block instead we get a callback when
+    // the port is open. Unfortunately, we need to wait until both ports are
+    // open (on the proxy server *and* the backend server, so we have this ugly
+    // closure that essentially waits to be called twice.
+
+    var block = (function (service) {
+        var i = 2;
+        return function () {
+            if (--i == 0) {
+                callback(service);
+            }
+        }
+    })(this);
+
+    if (!entry.statusCode) {
+        entry.statusCode = 200;
+    }
+
+    this.server = http.createServer(function (req, res) {
+        res.writeHead(entry.statusCode, headers);
+        res.end(entry.body);
+    });
+    this.server.listen(this.server_port, block);
+
+    this.proxy = fishback.createServer(cache);
+    this.proxy.listen(this.proxy_port, block);
+
+};
+
+/**
  * Shuts down (i.e. closes) both the web server and the proxy in front
  * of it.
  */
@@ -183,22 +225,47 @@ Service.prototype.shutdown = function() {
  * returns response for all requests.
  */
 
-exports.createService = function(response, callback) {
-    return new Service(response, callback);
+exports.createService = function(cache, response, callback) {
+    return new Service(cache, response, callback);
 };
 
 /**
  * Convenience function for checking whether expected matches actual.
  * actual can contain headers not present in expected, but the reverse
  * is not true.
+ * 
+ * @param  {object} actual
+ * @param  {object} expected
+ * @return {boolean}
  */
-
-exports.responseEqual = function(actual, expected) {
+function responseEqual(actual, expected) {
     Object.keys(expected.headers).forEach(function (k) {
         assert.equal(actual.headers[k], expected.headers[k]);
     });
     assert.equal(actual.body, expected.body);
 };
 
-exports.amap = amap;
-exports.step = step;
+function getCacheLocal(callback) {
+    callback(new fishback.CacheLocal());
+};
+
+function getCacheMongoDB(callback) {
+    var uri = process.env.MONGOLAB_URI || 
+      process.env.MONGOHQ_URL || 
+      'mongodb://localhost:27017/fishback'; 
+
+    require('mongodb').MongoClient.connect(uri, function(err, client) {
+        if (err) { console.error(err); return; }
+        client.createCollection("cache", { capped: true, size: 10000 }, function (err, coll) {
+            if (err) { console.error(err); return; }
+            callback(new fishback.CacheMongoDB(coll));
+        });
+    });
+};
+
+[knock, amap, step, request, responseEqual, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
+    exports[fn.name] = fn;
+});
+
+exports.SERVER_PORT = SERVER_PORT;
+exports.PROXY_PORT = PROXY_PORT;

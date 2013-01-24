@@ -54,4 +54,8 @@ function callback(service) {
     
 }
 
-lib.createService(response, callback);
+[lib.getCacheLocal].forEach(function (cache) {
+    cache(function (c) {
+        lib.createService(c, response, callback);
+    });
+});

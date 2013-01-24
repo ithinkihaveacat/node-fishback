@@ -234,3 +234,28 @@ var lib = require('./lib');
     })
     
 })();
+
+!function() {
+    var calledFoo = false;
+    var calledBar = false;
+    lib.knock({
+        foo: function(callback) {
+            process.nextTick(function () {
+                calledFoo = true;
+                callback("qqqq");
+            });
+        },
+        bar: function(callback) {
+            process.nextTick(function () {
+                calledBar = true;
+                callback(1, 2, 3);
+            });
+        }
+    }, function (knock) {
+        assert.equal(true, calledFoo);
+        assert.equal(true, calledBar);
+        assert.deepEqual({ foo: "qqqq", bar: [ 1, 2, 3 ]}, knock);
+    });
+    assert.equal(false, calledFoo);
+    assert.equal(false, calledBar);
+}()
