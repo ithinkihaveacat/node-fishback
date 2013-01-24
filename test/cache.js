@@ -21,11 +21,11 @@ var expected_hit = [
     { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" }
 ];
 
-lib.knock({
+lib.group({
     "static": lib.getStatic.bind(null, response, lib.SERVER_PORT),
     "cache": lib.getCacheLocal
-}, function (knock) {
-    var proxy = fishback.createServer(knock.cache, '0.0.0.0', lib.SERVER_PORT);
+}, function (group) {
+    var proxy = fishback.createServer(group.cache, '0.0.0.0', lib.SERVER_PORT);
     proxy.listen(lib.PROXY_PORT, function () {
 
         lib.step([ 
@@ -80,8 +80,8 @@ lib.knock({
 
             function (callback) {
                 proxy.close();
-                knock.cache.close();
-                knock.static.close();
+                group.cache.close();
+                group.static.close();
                 callback();
             }
 

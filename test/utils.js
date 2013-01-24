@@ -238,7 +238,7 @@ var lib = require('./lib');
 !function() {
     var calledFoo = false;
     var calledBar = false;
-    lib.knock({
+    lib.group({
         foo: function(callback) {
             process.nextTick(function () {
                 calledFoo = true;
@@ -251,11 +251,40 @@ var lib = require('./lib');
                 callback(1, 2, 3);
             });
         }
-    }, function (knock) {
+    }, function (group) {
         assert.equal(true, calledFoo);
         assert.equal(true, calledBar);
-        assert.deepEqual({ foo: "qqqq", bar: [ 1, 2, 3 ]}, knock);
+        assert.deepEqual({ foo: "qqqq", bar: [ 1, 2, 3 ]}, group);
     });
     assert.equal(false, calledFoo);
     assert.equal(false, calledBar);
+}()
+
+!function() {
+    var called = false;
+    var n = 0;
+    var knock = lib.knock(n, function () {
+        assert.equal(false, called);
+        called = true;
+    });
+    assert.equal(true, called);
+    knock();
+    assert.equal(true, called);
+}()
+
+!function() {
+    var called = false;
+    var n = 3;
+    var knock = lib.knock(n, function () {
+        assert.equal(false, called);
+        called = true;
+    });
+    assert.equal(false, called);
+    knock();
+    assert.equal(false, called);
+    knock();
+    assert.equal(false, called);
+    knock();
+    assert.equal(true, called);
+    assert.equal(3, n);
 }()

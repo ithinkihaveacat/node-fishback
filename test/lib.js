@@ -129,10 +129,30 @@ function request(count, callback) {
 }
 
 /**
+ * Returns a function that, when called n times, in turn calls callback.
+ * 
+ * @param  {int}      n        
+ * @param  {Function} callback
+ * @return {Function}         
+ */
+function knock(n, callback) {
+    if (n <= 0) {
+        callback();
+        return function () { };
+    } else {
+        return function () {
+            if (--n == 0) {
+                callback();
+            }
+        };
+    }
+}
+
+/**
  * @param  {object}   req
  * @param  {Function} callback
  */
-function knock(req, callback) {
+function group(req, callback) {
     var res = { };
     Object.keys(req).forEach(function (k) {
         req[k](function () {
@@ -267,7 +287,7 @@ function getCacheMongoDB(callback) {
     });
 }
 
-[knock, amap, step, request, responseEqual, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
+[knock, group, amap, step, request, responseEqual, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
     exports[fn.name] = fn;
 });
 
