@@ -1,3 +1,7 @@
+/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:true, strict:true, undef:true, unused:true, curly:true, node:true, indent:4, maxerr:50, globalstrict:true */
+
+"use strict";
+
 var SERVER_PORT = 9080;
 var PROXY_PORT = SERVER_PORT + 1;
 
@@ -31,13 +35,13 @@ function amap(arr, fn, callback) {
 
     // https://gist.github.com/846521
 
-    if (arr.length == 0) {
+    if (arr.length === 0) {
         callback([]);
     } else {
-        fn(arr[0], function(v) {
+        fn(arr[0], function (v) {
             amap(arr.slice(1), fn, function (list) {
                 callback([v].concat(list));
-            })
+            });
         });
     }
 
@@ -76,7 +80,7 @@ function step(tasks, errback) {
     
     if (tasks && tasks[0]) {
         var args = Array.prototype.slice.call(arguments, 2);
-        tasks[0].apply(null, args.concat(function() { // Note: exception thrown if tasks[0] not a function
+        tasks[0].apply(null, args.concat(function () { // Note: exception thrown if tasks[0] not a function
             var args = Array.prototype.slice.call(arguments);
             if (args[0] && errback) {
                 errback(args[0]); // error returned, abort tasks (Note: exception thrown if errback not a function)
@@ -108,21 +112,21 @@ function request(count, callback) {
         new Array(count), // values not used; this is just to satisfy amap()
         function (i, callback) {
             var actual = { statusCode: null, headers: { }, body: "" };
-            http.get(options, function(res) {
+            http.get(options, function (res) {
                 actual.statusCode = res.statusCode;
                 actual.headers = res.headers;
-                res.on('data', function(chunk) {
+                res.on('data', function (chunk) {
                     actual.body += chunk;
                 });
                 res.on('end', function () {
-                   callback(actual);
+                    callback(actual);
                 });
             });
         },
         callback
     );
 
-};
+}
 
 /**
  * @param  {object}   req
@@ -133,8 +137,8 @@ function knock(req, callback) {
     Object.keys(req).forEach(function (k) {
         req[k](function () {
             var args = Array.prototype.slice.call(arguments);
-            res[k] = args.length == 1 ? args[0] : args;
-            if (Object.keys(res).length == Object.keys(req).length) {
+            res[k] = args.length === 1 ? args[0] : args;
+            if (Object.keys(res).length === Object.keys(req).length) {
                 callback(res);
             }
         });
@@ -165,7 +169,7 @@ function getStatic(entry, port, callback) {
     server.listen(port, function () {
         callback(server);
     });
-};
+}
 
 /**
  * Creates an HTTP server, and a proxy sitting in front of it.  The server
@@ -189,10 +193,10 @@ function Service(cache, entry, callback) {
     var block = (function (service) {
         var i = 2;
         return function () {
-            if (--i == 0) {
+            if (--i === 0) {
                 callback(service);
             }
-        }
+        };
     })(this);
 
     if (!entry.statusCode) {
@@ -208,14 +212,14 @@ function Service(cache, entry, callback) {
     this.proxy = fishback.createServer(cache);
     this.proxy.listen(this.proxy_port, block);
 
-};
+}
 
 /**
  * Shuts down (i.e. closes) both the web server and the proxy in front
  * of it.
  */
 
-Service.prototype.shutdown = function() {
+Service.prototype.shutdown = function () {
     this.server.close();
     this.proxy.close();
 };
@@ -225,7 +229,7 @@ Service.prototype.shutdown = function() {
  * returns response for all requests.
  */
 
-exports.createService = function(cache, response, callback) {
+exports.createService = function (cache, response, callback) {
     return new Service(cache, response, callback);
 };
 
@@ -243,25 +247,25 @@ function responseEqual(actual, expected) {
         assert.equal(actual.headers[k], expected.headers[k]);
     });
     assert.equal(actual.body, expected.body);
-};
+}
 
 function getCacheLocal(callback) {
     callback(new fishback.CacheLocal());
-};
+}
 
 function getCacheMongoDB(callback) {
     var uri = process.env.MONGOLAB_URI || 
       process.env.MONGOHQ_URL || 
       'mongodb://localhost:27017/fishback'; 
 
-    require('mongodb').MongoClient.connect(uri, function(err, client) {
+    require('mongodb').MongoClient.connect(uri, function (err, client) {
         if (err) { console.error(err); return; }
         client.createCollection("cache", { capped: true, size: 10000 }, function (err, coll) {
             if (err) { console.error(err); return; }
             callback(new fishback.CacheMongoDB(coll));
         });
     });
-};
+}
 
 [knock, amap, step, request, responseEqual, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
     exports[fn.name] = fn;
