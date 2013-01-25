@@ -36,7 +36,7 @@ lib.group({
                     return NOW;
                 }
 
-                lib.request(expected_miss.length, function (actual) {
+                lib.request(expected_miss.length, lib.PROXY_PORT, function (actual) {
                     for (var i = 0; i < actual.length; i++) {
                         lib.responseEqual(actual[i], expected_miss[i]);
                     }
@@ -52,7 +52,7 @@ lib.group({
                     return NOW + 30000;
                 }
 
-                lib.request(expected_hit.length, function (actual) {
+                lib.request(expected_hit.length, lib.PROXY_PORT, function (actual) {
                     for (var i = 0; i < actual.length; i++) {
                         lib.responseEqual(actual[i], expected_hit[i]);
                     }
@@ -69,7 +69,7 @@ lib.group({
                     return NOW + 120000;
                 }
 
-                lib.request(expected_miss.length, function (actual) {
+                lib.request(expected_miss.length, lib.PROXY_PORT, function (actual) {
                     for (var i = 0; i < actual.length; i++) {
                         lib.responseEqual(actual[i], expected_miss[i]);
                     }

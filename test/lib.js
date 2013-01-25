@@ -100,11 +100,11 @@ function step(tasks, errback) {
  * @param callback called when all requests have completed, with an array of the
  *     results
  */
-function request(count, callback) {
+function request(count, port, callback) {
 
     var options = {
         host: '0.0.0.0',
-        port: PROXY_PORT,
+        port: port,
         path: '/'
     };
 
