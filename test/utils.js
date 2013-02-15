@@ -1,8 +1,12 @@
+/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:true, strict:true, undef:true, unused:true, curly:true, node:true, indent:4, maxerr:50, globalstrict:true */
+
+"use strict";
+
 var assert = require('assert');
 var fishback = require('../lib/fishback');
 var lib = require('./lib');
 
-(function() {
+(function () {
 
     assert.doesNotThrow(function () {
         lib.step([]); 
@@ -14,7 +18,7 @@ var lib = require('./lib');
 
 })();
 
-(function() {
+(function () {
 
     var a = [];
 
@@ -36,12 +40,13 @@ var lib = require('./lib');
         function (s, callback) {
             assert.equal(s, "c");
             assert.deepEqual(a, [1, "a", 2, "b", 3]);
+            callback();
         }
     ]);
     
 })();
 
-(function() {
+(function () {
 
     var a = [];
 
@@ -55,6 +60,7 @@ var lib = require('./lib');
                 // This shouldn't be called, because previous function returned error
                 a.push(s);
                 a.push(2);
+                callback();
             }
         ], function (err) {
             assert.equal(err, "ooops");
@@ -64,7 +70,7 @@ var lib = require('./lib');
     
 })();
 
-(function(){
+(function () {
 
     var data = [
         [ { }, false ],
@@ -81,41 +87,39 @@ var lib = require('./lib');
     
 })();
 
-(function() {
-
-    var getTime = Date.prototype.getTime;
+(function () {
 
     var now = 1295222561275;
-    Date.prototype.getTime = function() { return now; };
+    Date.prototype.getTime = function () { return now; };
 
     var data = [
         [ 
-            { created: now - (180*1000), expires: now + (180*1000) }, 
+            { created: (now - (180 * 1000)), expires: (now + (180 * 1000)) }, 
             { "cache-control": "max-age=120" },
             false 
         ],
         [ 
-            { created: now, expires: now + (180*1000) }, 
+            { created: now, expires: now + (180 * 1000) }, 
             { "cache-control": "max-age=120" },
             true 
         ],
         [ 
-            { created: 0, expires: now - (60*1000) }, 
+            { created: 0, expires: now - (60 * 1000) }, 
             { "cache-control": "max-stale=120" },
             true 
         ],
         [ 
-            { created: 0, expires: now - (60*1000) }, 
+            { created: 0, expires: now - (60 * 1000) }, 
             { "cache-control": "max-stale=30" },
             false 
         ],
         [ 
-            { created: 0, expires: now + (60*1000) }, 
+            { created: 0, expires: now + (60 * 1000) }, 
             { "cache-control": "min-fresh=30" },
             true 
         ],
         [ 
-            { created: 0, expires: now + (60*1000) },
+            { created: 0, expires: now + (60 * 1000) },
             { "cache-control": "min-fresh=120" },
             false
         ]
@@ -123,16 +127,16 @@ var lib = require('./lib');
 
     data.forEach(function (d) {
         assert.equal(fishback.isFreshEnough(d[0], { headers: d[1] }), d[2]);
-    })
+    });
 
 })();
 
-(function() {
+(function () {
 
     var getTime = Date.prototype.getTime;
 
     var now = 1295222561275;
-    Date.prototype.getTime = function() { return now; };
+    Date.prototype.getTime = function () { return now; };
 
     var data = [
         [ { }, 1295222561275 ],
@@ -148,7 +152,7 @@ var lib = require('./lib');
     
 })();
 
-(function() {
+(function () {
 
     var data = [
         [ { "cache-control": "jjjj", "foo": "no-cache" }, true ],
@@ -163,11 +167,11 @@ var lib = require('./lib');
 
 })();
 
-(function() {
+(function () {
 
     var data = [
         [ { "cache-control": "jjjj", "foo": "no-cache" }, false ],
-        [ { "cache-control": "no-cachejjj,only-if-cached" }, true ],
+        [ { "cache-control": "no-cachejjj,only-if-cached" }, true ]
     ];
 
     data.forEach(function (d) {
@@ -177,7 +181,7 @@ var lib = require('./lib');
 
 })();
 
-(function() {
+(function () {
 
     var data = [
         [
@@ -219,7 +223,7 @@ var lib = require('./lib');
 
 })();
 
-(function() {
+(function () {
 
     var data = [
         [ "", {} ],
@@ -231,21 +235,21 @@ var lib = require('./lib');
 
     data.forEach(function (d) {
         assert.deepEqual(fishback.parseHeader(d[0]), d[1]);
-    })
+    });
     
 })();
 
-!function() {
+(function () {
     var calledFoo = false;
     var calledBar = false;
     lib.group({
-        foo: function(callback) {
+        foo: function (callback) {
             process.nextTick(function () {
                 calledFoo = true;
                 callback("qqqq");
             });
         },
-        bar: function(callback) {
+        bar: function (callback) {
             process.nextTick(function () {
                 calledBar = true;
                 callback(1, 2, 3);
@@ -258,9 +262,9 @@ var lib = require('./lib');
     });
     assert.equal(false, calledFoo);
     assert.equal(false, calledBar);
-}()
+})();
 
-!function() {
+(function () {
     var called = false;
     var n = 0;
     var knock = lib.knock(n, function () {
@@ -270,9 +274,9 @@ var lib = require('./lib');
     assert.equal(true, called);
     knock();
     assert.equal(true, called);
-}()
+})();
 
-!function() {
+(function () {
     var called = false;
     var n = 3;
     var knock = lib.knock(n, function () {
@@ -287,4 +291,4 @@ var lib = require('./lib');
     knock();
     assert.equal(true, called);
     assert.equal(3, n);
-}()
+})();
