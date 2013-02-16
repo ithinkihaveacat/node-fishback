@@ -292,3 +292,15 @@ var lib = require('./lib');
     assert.equal(true, called);
     assert.equal(3, n);
 })();
+
+(function () {
+    var flag = false;
+    var fn1 = function () { return null; };
+    var fn2 = function () { return null; };
+    var fn3 = function () { return 1; };
+    var fn4 = function () { flag = true; return null; }; // shouldn't be called
+    lib.afirst([fn1, fn2, fn3, fn4], function (expected) {
+        assert.equal(1, expected);
+        assert.equal(false, flag);
+    });
+})();

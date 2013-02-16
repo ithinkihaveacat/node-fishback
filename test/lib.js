@@ -48,6 +48,29 @@ function amap(arr, fn, callback) {
 }
 
 /**
+ * Calls functions in arr in order, calling callback on the first non-null value
+ * returned.
+ * 
+ * @param  {array}    arr      array of functions
+ * @param  {Function} callback called with the first non-null return value
+ */
+function afirst(arr, callback) {
+
+    if (arr.length === 0) {
+        callback(null);
+    } else {
+        arr[0](function (obj) {
+            if (obj !== null) {
+                callback(obj);
+            } else {
+                afirst(arr.slice(1), callback);
+            }
+        });
+    }
+
+}
+
+/**
  * Passed array of async functions (i.e. whose last argument is a callback), and calls
  * them in order.
  *
@@ -287,7 +310,7 @@ function getCacheMongoDB(callback) {
     });
 }
 
-[knock, group, amap, step, request, responseEqual, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
+[knock, group, amap, afirst, step, request, responseEqual, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
     exports[fn.name] = fn;
 });
 
