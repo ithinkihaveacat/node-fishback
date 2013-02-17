@@ -1,35 +1,22 @@
 var lib = require('./lib');
 var fishback = require("../lib/fishback");
+var assert = require('assert');
 
-var response = { headers: { "foo": "bar" }, body: "Hello, World" };
-var expected = { headers: { "foo": "bar" }, body: "Hello, World" };
+var response = { headers: { foo: "bar", "cache-control": "public, max-age=60" }, body: "Hello, World!\n" };
+var expected = { headers: { foo: "bar", "cache-control": "public, max-age=60" }, body: "Hello, World!\n" };
 
-lib.getStatic(response, lib.SERVER_PORT, function (static) {
-
-    var port = lib.PROXY_PORT;
-
-    var caches = [ lib.getCacheLocal ];
-
-    var knock = lib.knock(caches.length, function () {
-        static.close();
-    });
-
-    caches.forEach(function (callback) {
-        callback(function (cache) {
-            var proxy = fishback.createServer(cache);
-            var p = port++;
-            proxy.listen(p, function () {
-                lib.request(10, p, function (actual) {
-                    actual.forEach(function (a) {
-                        lib.responseEqual(a, expected);
-                    });
-                    proxy.close(function () {
-                        cache.close();
-                        knock();
-                    });
+[lib.getCacheLocal].forEach(function (callback) {
+    callback(function (cache) {
+        var proxy = new fishback.Proxy(cache, lib.getMockClient(response));
+        proxy.listen(lib.PROXY_PORT, function () {
+            lib.request(5, lib.PROXY_PORT, function (actual) {
+                assert.equal(actual[0].headers["x-cache"], "MISS");
+                assert.equal(actual[1].headers["x-cache"], "HIT");
+                actual.forEach(function (a) {
+                    lib.responseEqual(a, expected);
                 });
+                proxy.close();
             });
         });
     });
-
 });

@@ -48,29 +48,6 @@ function amap(arr, fn, callback) {
 }
 
 /**
- * Calls functions in arr in order, calling callback on the first non-null value
- * returned.
- * 
- * @param  {array}    arr      array of functions
- * @param  {Function} callback called with the first non-null return value
- */
-function afirst(arr, callback) {
-
-    if (arr.length === 0) {
-        callback(null);
-    } else {
-        arr[0](function (obj) {
-            if (obj !== null) {
-                callback(obj);
-            } else {
-                afirst(arr.slice(1), callback);
-            }
-        });
-    }
-
-}
-
-/**
  * Passed array of async functions (i.e. whose last argument is a callback), and calls
  * them in order.
  *
@@ -310,7 +287,27 @@ function getCacheMongoDB(callback) {
     });
 }
 
-[knock, group, amap, afirst, step, request, responseEqual, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
+function getMockClient(response) {
+    return {
+        find: function(req, callback) {
+            var entry = new (require('events').EventEmitter);
+            entry.url = req.url;
+            entry.statusCode = 200;
+            entry.method = req.method;
+            entry.headers = response.headers;
+            entry.headers["x-cache"] = "MISS";
+            callback(entry);
+            entry.emit('data', response.body);
+            entry.emit('end');
+        }
+    };
+}
+
+function createServer(cache) {
+    return fishback.Proxy(cache, getClient());
+}
+
+[knock, group, amap, step, request, responseEqual, getMockClient, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
     exports[fn.name] = fn;
 });
 
