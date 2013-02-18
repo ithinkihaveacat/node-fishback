@@ -1,6 +1,7 @@
 // Tests for the caching capability
 
 var lib = require("./lib");
+var fishback = require("../lib/fishback");
 
 //require("fishback").setVerbose(true);
 
@@ -20,64 +21,73 @@ var expected_hit = [
     { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" }
 ];
 
-function callback(service) {
+[lib.getCacheLocal].forEach(function (callback) {
 
-    lib.step([ 
+    callback(function (cache) {
 
-        function (callback) {
+        var proxy = new fishback.Proxy(cache, lib.getMockClient(response));
 
-            Date.prototype.getTime = function() {
-                return NOW;
-            }
+        proxy.listen(lib.PROXY_PORT, function () {
 
-            service.request(expected_miss.length, function (actual) {
-                for (var i = 0; i < actual.length; i++) {
-                    lib.responseEqual(actual[i], expected_miss[i]);
+            lib.step([ 
+
+                function (callback) {
+
+                    Date.prototype.getTime = function() {
+                        return NOW;
+                    }
+
+                    lib.request(expected_miss.length, lib.PROXY_PORT, function (actual) {
+                        for (var i = 0; i < actual.length; i++) {
+                            lib.responseEqual(actual[i], expected_miss[i]);
+                        }
+                        callback();
+                    });
+
+                },
+
+                // No cache misses
+                function (callback) {
+
+                    Date.prototype.getTime = function() {
+                        return NOW + 30000;
+                    }
+
+                    lib.request(expected_hit.length, lib.PROXY_PORT, function (actual) {
+                        for (var i = 0; i < actual.length; i++) {
+                            lib.responseEqual(actual[i], expected_hit[i]);
+                        }
+                        callback();
+                    });
+
+                },
+
+                // Should get a cache miss the first time, because we're 120 seconds
+                // on.
+                function (callback) {
+
+                    Date.prototype.getTime = function() {
+                        return NOW + 120000;
+                    }
+
+                    lib.request(expected_miss.length, lib.PROXY_PORT, function (actual) {
+                        for (var i = 0; i < actual.length; i++) {
+                            lib.responseEqual(actual[i], expected_miss[i]);
+                        }
+                        callback();
+                    });
+
+                },
+
+                function (callback) {
+                    proxy.close();
                 }
-                callback();
-            });
 
-        },
+            ]);
 
-        // No cache misses
-        function (callback) {
+        });
 
-            Date.prototype.getTime = function() {
-                return NOW + 30000;
-            }
+    });
 
-            service.request(expected_hit.length, function (actual) {
-                for (var i = 0; i < actual.length; i++) {
-                    lib.responseEqual(actual[i], expected_hit[i]);
-                }
-                callback();
-            });
+});
 
-        },
-
-        // Should get a cache miss the first time, because we're 120 seconds
-        // on.
-        function (callback) {
-
-            Date.prototype.getTime = function() {
-                return NOW + 120000;
-            }
-
-            service.request(expected_miss.length, function (actual) {
-                for (var i = 0; i < actual.length; i++) {
-                    lib.responseEqual(actual[i], expected_miss[i]);
-                }
-                callback();
-            });
-
-        },
-
-        function (callback) {
-            service.shutdown();
-        }
-
-    ]);
-
-}
-
-lib.createService(response, callback);

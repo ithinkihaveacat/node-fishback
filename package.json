@@ -13,6 +13,9 @@
     "directories": {
         "lib": "./lib"
     },
+    "dependencies": {
+      "mongodb": "1.2.x"
+    },    
     "engines": {
         "node": ">=0.6.5"
     },

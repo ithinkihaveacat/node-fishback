@@ -1,57 +1,67 @@
 // Tests for the filtering capability
 
 var lib = require("./lib");
+var fishback = require("../lib/fishback");
 var http = require("http");
+var assert = require("assert");
 
 //require("fishback").setVerbose(true);
 
 var response = { headers: { "cache-control": "max-age=60, private" }, body: "Hello, World" };
 
-var expected = response;
-expected.headers["foo"] = "bar";
-expected.headers["cache-control"] = "max-age=60, public";
+var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" }, body: "Hello, World" };
 
-function callback(service) {
+[lib.getCacheLocal].forEach(function (callback) {
 
-    service.proxy.addReqFilter(function (req) {
-        req.url = "http://localhost:" + service.server_port + req.url;
-    });
-    service.proxy.addResFilter(function (res) {
-        res.headers["foo"] = "bar";
-        res.headers["cache-control"] = res.headers["cache-control"].replace(/\bprivate\b/, "public");
-    });
+    callback(function (cache) {
 
-    lib.step([
+        var proxy = new fishback.Proxy(cache, lib.getMockClient(response));
 
-        function (callback) {
-        
-            var options = {
-                host: '127.0.0.1',
-                port: service.proxy_port,
-                path: '/'
-            };
+        proxy.listen(lib.PROXY_PORT, function () {
 
-            http.get(options, function(res) {
-                var actual = { statusCode: null, headers: { }, body: "" };
-                actual.statusCode = res.statusCode;
-                actual.headers = res.headers;
-                res.on('data', function(chunk) {
-                    actual.body += chunk;
-                });
-                res.on('end', function() {
-                    lib.responseEqual(actual, response); 
-                    callback();
-                });
+            proxy.reqFilter.push(function (req) {
+                req.url = "/404";
             });
-            
-        },
 
-        function (callback) {
-            service.shutdown();
-        }
+            proxy.resFilter.push(function (res) {
+                res.headers["foo"] = "bar";
+                res.headers["cache-control"] = res.headers["cache-control"].replace(/\bprivate\b/, "public");
+            });
 
-    ]);
+            lib.step([
+
+                function (callback) {
+                
+                    var options = {
+                        host: '0.0.0.0',
+                        port: lib.PROXY_PORT,
+                        path: '/'
+                    };
+
+                    http.get(options, function(res) {
+                        var actual = { statusCode: null, headers: { }, body: "" };
+                        actual.statusCode = res.statusCode;
+                        assert.equal(res.statusCode, 404);
+                        actual.headers = res.headers;
+                        res.on('data', function(chunk) {
+                            actual.body += chunk;
+                        });
+                        res.on('end', function() {
+                            lib.responseEqual(actual, expected); 
+                            callback();
+                        });
+                    });
+                    
+                },
+
+                function (callback) {
+                    proxy.close();
+                }
+
+            ]);
+
+        });
+
+    });
     
-}
-
-lib.createService(response, callback);
+});
