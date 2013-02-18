@@ -141,7 +141,7 @@ function knock(n, callback) {
         return function () { };
     } else {
         return function () {
-            if (--n == 0) {
+            if (--n === 0) {
                 callback();
             }
         };
@@ -290,21 +290,17 @@ function getCacheMongoDB(callback) {
 function getMockClient(response) {
     return {
         find: function(req, callback) {
-            var entry = new (require('events').EventEmitter);
+            var entry = new (require('events').EventEmitter)();
             entry.url = req.url;
             entry.method = req.method;
             entry.headers = response.headers;
             entry.headers["x-cache"] = "MISS";
-            entry.statusCode = req.url == "/404" ? 404 : 200;
+            entry.statusCode = req.url === "/404" ? 404 : 200;
             callback(entry);
             entry.emit('data', response.body);
             entry.emit('end');
         }
     };
-}
-
-function createServer(cache) {
-    return fishback.Proxy(cache, getClient());
 }
 
 [knock, group, amap, step, request, responseEqual, getMockClient, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {

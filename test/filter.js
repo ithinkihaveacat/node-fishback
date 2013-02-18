@@ -1,4 +1,6 @@
-// Tests for the filtering capability
+/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:true, strict:true, undef:true, unused:true, curly:true, node:true, indent:4, maxerr:50, globalstrict:true */
+
+"use strict";
 
 var lib = require("./lib");
 var fishback = require("../lib/fishback");
@@ -24,7 +26,7 @@ var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" 
             });
 
             proxy.resFilter.push(function (res) {
-                res.headers["foo"] = "bar";
+                res.headers.foo = "bar";
                 res.headers["cache-control"] = res.headers["cache-control"].replace(/\bprivate\b/, "public");
             });
 
@@ -54,7 +56,7 @@ var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" 
                     
                 },
 
-                function (callback) {
+                function () {
                     proxy.close();
                 }
 

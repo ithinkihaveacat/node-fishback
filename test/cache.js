@@ -1,4 +1,6 @@
-// Tests for the caching capability
+/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:true, strict:true, undef:true, unused:true, curly:true, node:true, indent:4, maxerr:50, globalstrict:true */
+
+"use strict";
 
 var lib = require("./lib");
 var fishback = require("../lib/fishback");
@@ -35,7 +37,7 @@ var expected_hit = [
 
                     Date.prototype.getTime = function() {
                         return NOW;
-                    }
+                    };
 
                     lib.request(expected_miss.length, lib.PROXY_PORT, function (actual) {
                         for (var i = 0; i < actual.length; i++) {
@@ -51,7 +53,7 @@ var expected_hit = [
 
                     Date.prototype.getTime = function() {
                         return NOW + 30000;
-                    }
+                    };
 
                     lib.request(expected_hit.length, lib.PROXY_PORT, function (actual) {
                         for (var i = 0; i < actual.length; i++) {
@@ -68,7 +70,7 @@ var expected_hit = [
 
                     Date.prototype.getTime = function() {
                         return NOW + 120000;
-                    }
+                    };
 
                     lib.request(expected_miss.length, lib.PROXY_PORT, function (actual) {
                         for (var i = 0; i < actual.length; i++) {
@@ -79,7 +81,7 @@ var expected_hit = [
 
                 },
 
-                function (callback) {
+                function () {
                     proxy.close();
                 }
 
