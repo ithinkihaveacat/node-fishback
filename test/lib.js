@@ -292,10 +292,10 @@ function getMockClient(response) {
         find: function(req, callback) {
             var entry = new (require('events').EventEmitter);
             entry.url = req.url;
-            entry.statusCode = 200;
             entry.method = req.method;
             entry.headers = response.headers;
             entry.headers["x-cache"] = "MISS";
+            entry.statusCode = req.url == "/404" ? 404 : 200;
             callback(entry);
             entry.emit('data', response.body);
             entry.emit('end');

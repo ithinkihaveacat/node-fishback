@@ -81,7 +81,6 @@ var expected_hit = [
 
                 function (callback) {
                     proxy.close();
-                    callback();
                 }
 
             ]);
