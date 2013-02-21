@@ -11,7 +11,7 @@ var expected = { headers: { foo: "bar", "cache-control": "public, max-age=60" },
 
 [lib.getCacheMemory].forEach(function (callback) {
     callback(function (cache) {
-        var proxy = new fishback.Proxy(cache, lib.getMockClient(response));
+        var proxy = new fishback.createProxy(cache, lib.getMockClient(response));
         proxy.listen(lib.PROXY_PORT, function () {
             lib.request(5, lib.PROXY_PORT, function (actual) {
                 assert.equal(actual[0].headers["x-cache"], "MISS");

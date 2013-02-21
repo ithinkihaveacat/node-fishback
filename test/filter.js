@@ -17,15 +17,15 @@ var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" 
 
     callback(function (cache) {
 
-        var proxy = new fishback.Proxy(cache, lib.getMockClient(response));
+        var proxy = new fishback.createProxy(cache, lib.getMockClient(response));
 
         proxy.listen(lib.PROXY_PORT, function () {
 
-            proxy.reqFilter.push(function (req) {
+            proxy.fishback.reqFilter.push(function (req) {
                 req.url = "/404";
             });
 
-            proxy.resFilter.push(function (res) {
+            proxy.fishback.resFilter.push(function (res) {
                 res.headers.foo = "bar";
                 res.headers["cache-control"] = res.headers["cache-control"].replace(/\bprivate\b/, "public");
             });

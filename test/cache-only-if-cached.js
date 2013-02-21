@@ -24,7 +24,7 @@ var port = lib.PROXY_PORT;
 
         var client = { find: function () { assert.equal(false, true); } }; // unreachable
 
-        var proxy = new fishback.Proxy(cache, client);
+        var proxy = new fishback.createProxy(cache, client);
 
         proxy.listen(p, function () {
 
@@ -56,7 +56,7 @@ var port = lib.PROXY_PORT;
 
         var p = port++;
 
-        var proxy = new fishback.Proxy(cache, lib.getMockClient(response));
+        var proxy = new fishback.createProxy(cache, lib.getMockClient(response));
 
         proxy.listen(p, function () {
 

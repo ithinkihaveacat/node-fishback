@@ -27,7 +27,7 @@ var expected_hit = [
 
     callback(function (cache) {
 
-        var proxy = new fishback.Proxy(cache, lib.getMockClient(response));
+        var proxy = new fishback.createProxy(cache, lib.getMockClient(response));
 
         proxy.listen(lib.PROXY_PORT, function () {
 

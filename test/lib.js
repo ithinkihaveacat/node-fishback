@@ -9,8 +9,6 @@ var assert = require("assert");
 var http = require("http");
 var fishback = require("../lib/fishback");
 
-fishback.setVerbose(false);
-
 /**
  * Asynchronous map function.  For each element of arr, fn(element, callback) is
  * called, where callback receives the result.  Note that the individual "maps"
