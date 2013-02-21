@@ -9,7 +9,7 @@ var assert = require('assert');
 var response = { headers: { foo: "bar", "cache-control": "public, max-age=60" }, body: "Hello, World!\n" };
 var expected = { headers: { foo: "bar", "cache-control": "public, max-age=60" }, body: "Hello, World!\n" };
 
-[lib.getCacheLocal].forEach(function (callback) {
+[lib.getCacheMemory].forEach(function (callback) {
     callback(function (cache) {
         var proxy = new fishback.Proxy(cache, lib.getMockClient(response));
         proxy.listen(lib.PROXY_PORT, function () {

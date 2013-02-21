@@ -23,7 +23,7 @@ var expected_hit = [
     { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" }
 ];
 
-[lib.getCacheLocal].forEach(function (callback) {
+[lib.getCacheMemory].forEach(function (callback) {
 
     callback(function (cache) {
 

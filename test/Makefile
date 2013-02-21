@@ -1,5 +1,5 @@
 test:
-	node utils.js
+	node helper.js
 	node simple.js
 	node filter.js
 	node cache.js

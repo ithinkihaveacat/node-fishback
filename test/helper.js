@@ -3,7 +3,7 @@
 "use strict";
 
 var assert = require('assert');
-var fishback = require('../lib/fishback');
+var fishback = require('../lib/helper');
 var lib = require('./lib');
 
 (function () {

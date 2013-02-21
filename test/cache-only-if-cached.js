@@ -14,7 +14,7 @@ var response = { headers: { "cache-control": "public, max-age=60" }, body: "Hell
 
 var port = lib.PROXY_PORT;
 
-[lib.getCacheLocal].forEach(function (callback) {
+[lib.getCacheMemory].forEach(function (callback) {
 
     callback(function (cache) {
 

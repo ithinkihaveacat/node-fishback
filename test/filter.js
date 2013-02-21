@@ -13,7 +13,7 @@ var response = { headers: { "cache-control": "max-age=60, private" }, body: "Hel
 
 var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" }, body: "Hello, World" };
 
-[lib.getCacheLocal].forEach(function (callback) {
+[lib.getCacheMemory].forEach(function (callback) {
 
     callback(function (cache) {
 

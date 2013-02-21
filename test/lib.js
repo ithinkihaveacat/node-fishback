@@ -269,8 +269,8 @@ function responseEqual(actual, expected) {
     assert.equal(actual.body, expected.body);
 }
 
-function getCacheLocal(callback) {
-    callback(new fishback.CacheLocal());
+function getCacheMemory(callback) {
+    callback(new fishback.CacheMemory());
 }
 
 function getCacheMongoDB(callback) {
@@ -303,7 +303,7 @@ function getMockClient(response) {
     };
 }
 
-[knock, group, amap, step, request, responseEqual, getMockClient, getStatic, getCacheLocal, getCacheMongoDB].forEach(function (fn) {
+[knock, group, amap, step, request, responseEqual, getMockClient, getStatic, getCacheMemory, getCacheMongoDB].forEach(function (fn) {
     exports[fn.name] = fn;
 });
 
