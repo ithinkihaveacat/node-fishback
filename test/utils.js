@@ -76,6 +76,8 @@ var lib = require('./lib');
         [ { }, false ],
         [ { "cache-control": "public" }, true ],
         [ { "cache-control": "s-maxage=7773, public, foo=bar" }, true ],
+        [ { "cache-control": "no-cache, foo=bar" }, false ],
+        [ { "cache-control": "no-store, foo=bar" }, false ],
         [ { "cache-control": "s-maxage=7773, private, foo=bar" }, false ],
         [ { "cache-control": "s-maxage=7773, qqq=public, foo=bar" }, false ],
         [ { "expires": "Tue, 17 Jan 2012 00:49:02 GMT", "cache-control": "public, max-age=31536000" }, true ]
@@ -110,8 +112,18 @@ var lib = require('./lib');
         ],
         [ 
             { created: 0, expires: now - (60 * 1000) }, 
+            { "cache-control": "max-stale=120, max-age=0" },
+            true 
+        ],
+        [ 
+            { created: 0, expires: now - (60 * 1000) }, 
             { "cache-control": "max-stale=30" },
             false 
+        ],
+        [ 
+            { created: 0, expires: now - (60 * 1000) }, 
+            { "cache-control": "max-stale" },
+            true 
         ],
         [ 
             { created: 0, expires: now + (60 * 1000) }, 
@@ -122,11 +134,31 @@ var lib = require('./lib');
             { created: 0, expires: now + (60 * 1000) },
             { "cache-control": "min-fresh=120" },
             false
+        ],
+        [
+            { created: 0, expires: now - (60 * 1000) },
+            { },
+            false
+        ],
+        [
+            { created: 0, expires: now + (60 * 1000) },
+            { "cache-control": "max-age=0" },
+            false
+        ],
+        [
+            { created: 0, expires: now + (60 * 1000) },
+            { "cache-control": "must-revalidate" },
+            false
+        ],
+        [
+            { created: 0, expires: now - (60 * 1000) },
+            { "cache-control": "jjj" },
+            false
         ]
     ];
 
     data.forEach(function (d) {
-        assert.equal(fishback.isFreshEnough(d[0], { headers: d[1] }), d[2]);
+        assert.equal(fishback.isFreshEnough(d[0], { headers: d[1] }), d[2], require('util').inspect(d));
     });
 
 })();
