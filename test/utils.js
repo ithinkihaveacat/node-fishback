@@ -79,12 +79,13 @@ var lib = require('./lib');
         [ { "cache-control": "no-cache, foo=bar" }, false ],
         [ { "cache-control": "no-store, foo=bar" }, false ],
         [ { "cache-control": "s-maxage=7773, private, foo=bar" }, false ],
-        [ { "cache-control": "s-maxage=7773, qqq=public, foo=bar" }, false ],
+        [ { "cache-control": "s-maxage=7773, qqq=public, foo=bar" }, true ],
+        [ { "cache-control": "qqq=public, foo=bar" }, false ],
         [ { "expires": "Tue, 17 Jan 2012 00:49:02 GMT", "cache-control": "public, max-age=31536000" }, true ]
     ];
 
     data.forEach(function (d) {
-        assert.equal(fishback.canCache({ headers: d[0] }), d[1]);
+        assert.equal(fishback.canCache({ headers: d[0] }), d[1], require('util').inspect(d));
     });
     
 })();
