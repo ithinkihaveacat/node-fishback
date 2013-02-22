@@ -21,11 +21,11 @@ var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" 
 
         proxy.listen(lib.PROXY_PORT, function () {
 
-            proxy.fishback.reqFilter.push(function (req) {
+            proxy.fishback.on('request', function (req) {
                 req.url = "/404";
             });
 
-            proxy.fishback.resFilter.push(function (res) {
+            proxy.fishback.on('response', function (res) {
                 res.headers.foo = "bar";
                 res.headers["cache-control"] = res.headers["cache-control"].replace(/\bprivate\b/, "public");
             });
