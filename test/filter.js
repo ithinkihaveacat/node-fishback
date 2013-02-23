@@ -7,63 +7,49 @@ var fishback = require("../lib/fishback");
 var http = require("http");
 var assert = require("assert");
 
-//require("fishback").setVerbose(true);
-
-var response = { headers: { "cache-control": "max-age=60, private" }, body: "Hello, World" };
-
+var response = { headers: { "cache-control": "max-age=60, private" }, body: [ "Hello, World" ]};
 var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" }, body: "Hello, World" };
+
+var count = 0;
 
 [lib.getCacheMemory].forEach(function (callback) {
 
     callback(function (cache) {
 
-        var proxy = new fishback.createProxy(cache, lib.getMockClient(response));
+        var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
+        var res = new lib.http.ServerResponse();
 
-        proxy.listen(lib.PROXY_PORT, function () {
-
-            proxy.fishback.on('request', function (req) {
-                req.url = "/404";
-            });
-
-            proxy.fishback.on('response', function (res) {
-                res.headers.foo = "bar";
-                res.headers["cache-control"] = res.headers["cache-control"].replace(/\bprivate\b/, "public");
-            });
-
-            lib.step([
-
-                function (callback) {
-                
-                    var options = {
-                        host: '0.0.0.0',
-                        port: lib.PROXY_PORT,
-                        path: '/'
-                    };
-
-                    http.get(options, function(res) {
-                        var actual = { statusCode: null, headers: { }, body: "" };
-                        actual.statusCode = res.statusCode;
-                        assert.equal(res.statusCode, 404);
-                        actual.headers = res.headers;
-                        res.on('data', function(chunk) {
-                            actual.body += chunk;
-                        });
-                        res.on('end', function() {
-                            lib.responseEqual(actual, expected); 
-                            callback();
-                        });
-                    });
-                    
-                },
-
-                function () {
-                    proxy.close();
-                }
-
-            ]);
-
+        var proxy = new fishback.Proxy(cache, { 
+            find: function (req, callback) { 
+                var res = new lib.http.ClientResponse(response);
+                res.url = req.url;
+                res.method = req.method;
+                callback(res);
+                res.fire();
+            }
         });
+
+        proxy.on('request', function (req) {
+            req.url = "/404";
+        });
+
+        proxy.on('response', function (res) {
+            res.headers.foo = "bar";
+            res.headers["cache-control"] = res.headers["cache-control"].replace(/\bprivate\b/, "public");
+        });
+
+        res.on('end', function () {
+            lib.responseEqual(res, expected);
+            count++;
+        });
+
+        proxy.request(req, res);
+        req.fire();
 
     });
     
+});
+
+process.on('exit', function () {
+    assert.equal(count, 1);
 });

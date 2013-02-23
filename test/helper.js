@@ -12,10 +12,6 @@ var lib = require('./lib');
         lib.step([]); 
     });
 
-    assert.throws(function () {
-        lib.step([1]);
-    });
-
 })();
 
 (function () {

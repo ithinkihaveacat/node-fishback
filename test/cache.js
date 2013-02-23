@@ -3,93 +3,179 @@
 "use strict";
 
 var lib = require("./lib");
-var fishback = require("../lib/fishback");
+var assert = require("assert");
 
-//require("fishback").setVerbose(true);
+var count = 0;
+var list = [ require("../lib/cache.memory") ];
 
-var NOW = 198025200000;
+list.forEach(function (Cache) {
 
-var response = { headers: { "cache-control": "max-age=60, public" }, body: "Hello, World" };
+    lib.step([
 
-var expected_miss = [
-    { headers: { "x-cache": "MISS", "cache-control": "max-age=60, public" }, body: "Hello, World" },
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" },
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" }
-];
+        function (next) {
+            var c = new Cache();
 
-var expected_hit = [
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" },
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" },
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" }
-];
+            var req = new lib.http.ServerRequest({
+                url: "/",
+                method: "GET"
+            });
 
-[lib.getCacheMemory].forEach(function (callback) {
+            c.find(req, function (res) {
+                count++;
+                assert.equal(res, null);
+            });
 
-    callback(function (cache) {
+            req.fire();
 
-        var proxy = new fishback.createProxy(cache, lib.getMockClient(response));
+            next();
+        },
 
-        proxy.listen(lib.PROXY_PORT, function () {
+        function (next) {
+            var c = new Cache();
 
-            lib.step([ 
-
-                function (callback) {
-
-                    Date.prototype.getTime = function() {
-                        return NOW;
-                    };
-
-                    lib.request(expected_miss.length, lib.PROXY_PORT, function (actual) {
-                        for (var i = 0; i < actual.length; i++) {
-                            lib.responseEqual(actual[i], expected_miss[i]);
-                        }
-                        callback();
-                    });
-
+            var res = new lib.http.ClientResponse({
+                url: "/",
+                method: "GET",
+                statusCode: 200,
+                headers: {
+                    "cache-control": "public, max-age=60"
                 },
+                body: [ "Hello, World!" ]
+            });
 
-                // No cache misses
-                function (callback) {
+            c.add(res);
+            res.fire();
 
-                    Date.prototype.getTime = function() {
-                        return NOW + 30000;
-                    };
+            var req = new lib.http.ServerRequest({
+                url: "/",
+                method: "GET"
+            });
 
-                    lib.request(expected_hit.length, lib.PROXY_PORT, function (actual) {
-                        for (var i = 0; i < actual.length; i++) {
-                            lib.responseEqual(actual[i], expected_hit[i]);
-                        }
-                        callback();
-                    });
+            c.find(req, function (res) {
+                count++;
+                lib.responseEqual(res, { headers: {}, body: "Hello, World!" });
+            });
 
+            req.fire();
+
+            next();
+        },
+
+        function (next) {
+            var c = new Cache();
+
+            var res = new lib.http.ClientResponse({
+                url: "/foo",
+                method: "GET",
+                statusCode: 200,
+                headers: {
+                    "cache-control": "public, max-age=60"
                 },
+                body: [ "Hello, Foo!" ]
+            });
 
-                // Should get a cache miss the first time, because we're 120 seconds
-                // on.
-                function (callback) {
+            c.add(res);
+            res.fire();
 
-                    Date.prototype.getTime = function() {
-                        return NOW + 120000;
-                    };
+            var req = new lib.http.ServerRequest({
+                url: "/",
+                method: "GET"
+            });
 
-                    lib.request(expected_miss.length, lib.PROXY_PORT, function (actual) {
-                        for (var i = 0; i < actual.length; i++) {
-                            lib.responseEqual(actual[i], expected_miss[i]);
-                        }
-                        callback();
-                    });
+            c.find(req, function (res) {
+                count++;
+                assert.equal(res, null);
+            });
 
+            req.fire();
+
+            next();
+        },
+
+        function (next) {
+            var c = new Cache();
+
+            var res = new lib.http.ClientResponse({
+                url: "/foo",
+                method: "GET",
+                statusCode: 200,
+                headers: {
+                    "cache-control": "public, max-age=60"
                 },
+                body: [ "Hello, Foo!" ]
+            });
 
-                function () {
-                    proxy.close();
-                }
+            c.add(res);
+            res.fire();
 
-            ]);
+            var res = new lib.http.ClientResponse({
+                url: "/bar",
+                method: "GET",
+                statusCode: 200,
+                headers: {
+                    "cache-control": "public, max-age=60"
+                },
+                body: [ "Hello, Bar!" ]
+            });
 
-        });
+            c.add(res);
+            res.fire();
 
-    });
+            var req = new lib.http.ServerRequest({
+                url: "/foo",
+                method: "GET"
+            });
+
+            c.find(req, function (res) {
+                count++;
+                lib.responseEqual(res, { headers: {}, body: "Hello, Foo!" });
+            });
+
+            req.fire();
+
+            var req = new lib.http.ServerRequest({
+                url: "/bar",
+                method: "GET"
+            });
+
+            c.find(req, function (res) {
+                count++;
+                lib.responseEqual(res, { headers: {}, body: "Hello, Bar!" });
+            });
+
+            req.fire();
+
+            var req = new lib.http.ServerRequest({
+                url: "/foo",
+                method: "GET"
+            });
+
+            c.find(req, function (res) {
+                count++;
+                lib.responseEqual(res, { headers: {}, body: "Hello, Foo!" });
+            });
+
+            req.fire();
+
+            var req = new lib.http.ServerRequest({
+                url: "/quux",
+                method: "GET"
+            });
+
+            c.find(req, function (res) {
+                count++;
+                assert.equal(res, null);
+            });
+
+            req.fire();
+
+            next();
+        }
+
+    ]);
 
 });
 
+process.on('exit', function () {
+    assert.equal(count, 7);
+});

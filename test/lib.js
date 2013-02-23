@@ -7,6 +7,8 @@ var PROXY_PORT = SERVER_PORT + 1;
 
 var assert = require("assert");
 var http = require("http");
+var util = require("util");
+var events = require("events");
 var fishback = require("../lib/fishback");
 
 /**
@@ -33,15 +35,17 @@ function amap(arr, fn, callback) {
 
     // https://gist.github.com/846521
 
-    if (arr.length === 0) {
-        callback([]);
-    } else {
-        fn(arr[0], function (v) {
-            amap(arr.slice(1), fn, function (list) {
-                callback([v].concat(list));
+    process.nextTick(function () {
+        if (arr.length === 0) {
+            callback([]);
+        } else {
+            fn(arr[0], function (v) {
+                amap(arr.slice(1), fn, function (list) {
+                    callback([v].concat(list));
+                });
             });
-        });
-    }
+        }
+    });
 
 }
 
@@ -78,16 +82,131 @@ function step(tasks, errback) {
     
     if (tasks && tasks[0]) {
         var args = Array.prototype.slice.call(arguments, 2);
-        tasks[0].apply(null, args.concat(function () { // Note: exception thrown if tasks[0] not a function
-            var args = Array.prototype.slice.call(arguments);
-            if (args[0] && errback) {
-                errback(args[0]); // error returned, abort tasks (Note: exception thrown if errback not a function)
-            } else {
-                step.apply(null, [tasks.slice(1)].concat(errback, args.slice(1)));
-            }
-        }));
+        // Empty the event queue, to ensure isolation between steps
+        process.nextTick(function () {
+            tasks[0].apply(null, args.concat(function () { // Note: exception thrown if tasks[0] not a function
+                var args = Array.prototype.slice.call(arguments);
+                if (args[0] && errback) {
+                    errback(args[0]); // error returned, abort tasks (Note: exception thrown if errback not a function)
+                } else {
+                    step.apply(null, [tasks.slice(1)].concat(errback, args.slice(1)));
+                }
+            }));
+        });
     }
 
+}
+
+function ServerRequest(entry) {
+    this.url = entry.url;
+    this.method = entry.method || 'GET';
+    this.headers = entry.headers || { };
+    this.body = entry.body || [ ];
+};
+
+util.inherits(ServerRequest, events.EventEmitter);
+
+ServerRequest.prototype.fire = function () {
+    var emit = this.emit.bind(this);
+    this.body.forEach(function (chunk) {
+        emit('data', chunk);
+    });
+    emit('end');
+}
+
+function ServerResponse() {
+    this.headers = { };
+    this.body = [ ];
+}
+
+util.inherits(ServerResponse, events.EventEmitter);
+
+ServerResponse.prototype.writeHead = function (statusCode, headers) {
+    this.statusCode = statusCode;
+    var h = this.headers;
+    Object.keys(headers).forEach(function (k) {
+        h[k] = headers[k];
+    });
+};
+
+ServerResponse.prototype.write = function (chunk) {
+    this.body += chunk;
+};
+
+ServerResponse.prototype.end = function () {
+    this.emit('end');
+};    
+
+function ClientRequest() {
+};
+
+util.inherits(ClientRequest, events.EventEmitter);
+
+function ClientResponse(entry) {
+    this.url = entry.url;
+    this.method = entry.method;
+    this.statusCode = entry.statusCode || 200;
+    var headers = { };
+    Object.keys(entry.headers).forEach(function (k) {
+        headers[k] = entry.headers[k];
+    });
+    this.headers = headers;
+    this.body = entry.body || [ ];
+}
+
+util.inherits(ClientResponse, events.EventEmitter);
+
+ClientResponse.prototype.fire = function () {
+    var emit = this.emit.bind(this);
+    this.body.forEach(function (chunk) {
+        emit('data', chunk);
+    });
+    emit('end');
+};
+
+exports.http = {
+    ServerRequest: ServerRequest,
+    ServerResponse: ServerResponse,
+    ClientRequest: ClientRequest,
+    ClientResponse: ClientResponse
+};
+
+function mockRequest(proxy, count, callback) {
+
+    var events = require('events');
+
+    amap(
+        new Array(count),
+        function (i, fn) {
+
+            var actual = {
+                statusCode: null,
+                headers: null,
+                body: ""
+            };
+
+            var req = new events.EventEmitter();
+            req.url = '/';
+            req.method = 'GET';
+            req.headers = {};
+
+            var res = new events.EventEmitter();
+            res.writeHead = function (statusCode, headers) {
+                actual.statusCode = statusCode;
+                actual.headers = headers;
+            };
+            res.write = function (chunk) {
+                actual.body += chunk;
+            };
+            res.end = function () {
+                fn(actual);
+            };
+
+            proxy.request(req, res);
+            req.emit('end');
+        },
+        callback
+    );
 }
 
 /**
@@ -164,94 +283,6 @@ function group(req, callback) {
 }
 
 /**
- * @param {object} entry
- * @param {int} port
- * @param {Function} callback
- */
-function getStatic(entry, port, callback) {
-    port = port || SERVER_PORT;
-
-    if (!entry.statusCode) {
-        entry.statusCode = 200;
-    }
-
-    var headers = Object.keys(entry.headers).map(function (k) {
-        return [ k, entry.headers[k] ];
-    });
-
-    var server = http.createServer(function (req, res) {
-        res.writeHead(entry.statusCode, headers);
-        res.end(entry.body);
-    });
-
-    server.listen(port, function () {
-        callback(server);
-    });
-}
-
-/**
- * Creates an HTTP server, and a proxy sitting in front of it.  The server
- * returns response for all requests.
- */
-
-function Service(cache, entry, callback) {
-
-    this.server_port = SERVER_PORT;
-    this.proxy_port  = PROXY_PORT;
-
-    var headers = Object.keys(entry.headers).map(function (k) {
-        return [ k, entry.headers[k] ];
-    });
-
-    // Kinda ugly hack: listen() doesn't block instead we get a callback when
-    // the port is open. Unfortunately, we need to wait until both ports are
-    // open (on the proxy server *and* the backend server, so we have this ugly
-    // closure that essentially waits to be called twice.
-
-    var block = (function (service) {
-        var i = 2;
-        return function () {
-            if (--i === 0) {
-                callback(service);
-            }
-        };
-    })(this);
-
-    if (!entry.statusCode) {
-        entry.statusCode = 200;
-    }
-
-    this.server = http.createServer(function (req, res) {
-        res.writeHead(entry.statusCode, headers);
-        res.end(entry.body);
-    });
-    this.server.listen(this.server_port, block);
-
-    this.proxy = fishback.createServer(cache);
-    this.proxy.listen(this.proxy_port, block);
-
-}
-
-/**
- * Shuts down (i.e. closes) both the web server and the proxy in front
- * of it.
- */
-
-Service.prototype.shutdown = function () {
-    this.server.close();
-    this.proxy.close();
-};
-
-/**
- * Creates an HTTP server, and a proxy sitting in front of it.  The server
- * returns response for all requests.
- */
-
-exports.createService = function (cache, response, callback) {
-    return new Service(cache, response, callback);
-};
-
-/**
  * Convenience function for checking whether expected matches actual.
  * actual can contain headers not present in expected, but the reverse
  * is not true.
@@ -301,7 +332,7 @@ function getMockClient(response) {
     };
 }
 
-[knock, group, amap, step, request, responseEqual, getMockClient, getStatic, getCacheMemory, getCacheMongoDB].forEach(function (fn) {
+[knock, group, amap, step, responseEqual, getCacheMemory, getCacheMongoDB].forEach(function (fn) {
     exports[fn.name] = fn;
 });
 

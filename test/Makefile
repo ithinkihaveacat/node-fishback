@@ -1,6 +1,7 @@
 test:
 	node helper.js
-	node simple.js
-	node filter.js
 	node cache.js
-	node cache-only-if-cached.js
+	node filter.js
+	node http-simple.js
+	node http-only-if-cached.js
+	node http-public.js
