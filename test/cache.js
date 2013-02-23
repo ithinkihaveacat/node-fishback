@@ -93,9 +93,12 @@ list.forEach(function (Cache) {
         },
 
         function (next) {
+
+            var req, res;
+
             var c = new Cache();
 
-            var res = new lib.http.ClientResponse({
+            res = new lib.http.ClientResponse({
                 url: "/foo",
                 method: "GET",
                 statusCode: 200,
@@ -108,7 +111,7 @@ list.forEach(function (Cache) {
             c.add(res);
             res.fire();
 
-            var res = new lib.http.ClientResponse({
+            res = new lib.http.ClientResponse({
                 url: "/bar",
                 method: "GET",
                 statusCode: 200,
@@ -121,7 +124,7 @@ list.forEach(function (Cache) {
             c.add(res);
             res.fire();
 
-            var req = new lib.http.ServerRequest({
+            req = new lib.http.ServerRequest({
                 url: "/foo",
                 method: "GET"
             });
@@ -133,7 +136,7 @@ list.forEach(function (Cache) {
 
             req.fire();
 
-            var req = new lib.http.ServerRequest({
+            req = new lib.http.ServerRequest({
                 url: "/bar",
                 method: "GET"
             });
@@ -145,7 +148,7 @@ list.forEach(function (Cache) {
 
             req.fire();
 
-            var req = new lib.http.ServerRequest({
+            req = new lib.http.ServerRequest({
                 url: "/foo",
                 method: "GET"
             });
@@ -157,7 +160,7 @@ list.forEach(function (Cache) {
 
             req.fire();
 
-            var req = new lib.http.ServerRequest({
+            req = new lib.http.ServerRequest({
                 url: "/quux",
                 method: "GET"
             });

@@ -4,7 +4,6 @@
 
 var lib = require("./lib");
 var fishback = require("../lib/fishback");
-var http = require("http");
 var assert = require("assert");
 
 var response = { headers: { "cache-control": "max-age=60, private" }, body: [ "Hello, World" ]};

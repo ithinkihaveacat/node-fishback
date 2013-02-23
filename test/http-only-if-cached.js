@@ -30,7 +30,9 @@ var count = 0;
         res.on('end', function () {
             count++;
             lib.responseEqual(res, { 
-                statusCode: 504, headers: { "x-cache": "MISS" }, body: "" 
+                statusCode: 504, 
+                headers: { "x-cache": "MISS" }, 
+                body: "" 
             });
         });
 

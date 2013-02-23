@@ -6,7 +6,6 @@ var SERVER_PORT = 9080;
 var PROXY_PORT = SERVER_PORT + 1;
 
 var assert = require("assert");
-var http = require("http");
 var util = require("util");
 var events = require("events");
 var fishback = require("../lib/fishback");
@@ -102,7 +101,7 @@ function ServerRequest(entry) {
     this.method = entry.method || 'GET';
     this.headers = entry.headers || { };
     this.body = entry.body || [ ];
-};
+}
 
 util.inherits(ServerRequest, events.EventEmitter);
 
@@ -112,7 +111,7 @@ ServerRequest.prototype.fire = function () {
         emit('data', chunk);
     });
     emit('end');
-}
+};
 
 function ServerResponse() {
     this.headers = { };
@@ -138,7 +137,7 @@ ServerResponse.prototype.end = function () {
 };    
 
 function ClientRequest() {
-};
+}
 
 util.inherits(ClientRequest, events.EventEmitter);
 
@@ -170,80 +169,6 @@ exports.http = {
     ClientRequest: ClientRequest,
     ClientResponse: ClientResponse
 };
-
-function mockRequest(proxy, count, callback) {
-
-    var events = require('events');
-
-    amap(
-        new Array(count),
-        function (i, fn) {
-
-            var actual = {
-                statusCode: null,
-                headers: null,
-                body: ""
-            };
-
-            var req = new events.EventEmitter();
-            req.url = '/';
-            req.method = 'GET';
-            req.headers = {};
-
-            var res = new events.EventEmitter();
-            res.writeHead = function (statusCode, headers) {
-                actual.statusCode = statusCode;
-                actual.headers = headers;
-            };
-            res.write = function (chunk) {
-                actual.body += chunk;
-            };
-            res.end = function () {
-                fn(actual);
-            };
-
-            proxy.request(req, res);
-            req.emit('end');
-        },
-        callback
-    );
-}
-
-/**
- * Performs a request count times, collecting the results into an
- * array which is then passed to callback.
- * 
- * @param count number of times to perform the request
- * @param callback called when all requests have completed, with an array of the
- *     results
- */
-function request(count, port, callback) {
-
-    var options = {
-        host: '0.0.0.0',
-        port: port,
-        path: '/'
-    };
-
-    amap(
-        new Array(count), // values not used; this is just to satisfy amap()
-        function (i, callback) {
-            var actual = { statusCode: null, headers: { }, body: "" };
-            http.get(options, function (res) {
-                actual.statusCode = res.statusCode;
-                actual.headers = res.headers;
-                res.on('data', function (chunk) {
-                    actual.body += chunk;
-                });
-                res.on('end', function () {
-                    callback(actual);
-                });
-            });
-        },
-        callback
-    );
-
-}
 
 /**
  * Returns a function that, when called n times, in turn calls callback.
@@ -314,22 +239,6 @@ function getCacheMongoDB(callback) {
             callback(new fishback.CacheMongoDB(coll));
         });
     });
-}
-
-function getMockClient(response) {
-    return {
-        find: function(req, callback) {
-            var entry = new (require('events').EventEmitter)();
-            entry.url = req.url;
-            entry.method = req.method;
-            entry.headers = response.headers;
-            entry.headers["x-cache"] = "MISS";
-            entry.statusCode = req.url === "/404" ? 404 : 200;
-            callback(entry);
-            entry.emit('data', response.body);
-            entry.emit('end');
-        }
-    };
 }
 
 [knock, group, amap, step, responseEqual, getCacheMemory, getCacheMongoDB].forEach(function (fn) {
