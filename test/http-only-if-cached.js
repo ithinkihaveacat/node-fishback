@@ -7,6 +7,7 @@ var lib = require('./lib');
 var fishback = require("../lib/fishback");
 
 var NOW = 198025200000;
+NOW = 0;
 
 var count = 0;
 
@@ -14,9 +15,9 @@ var count = 0;
 
     callback(function (cache) {
 
-        var client = { 
-            find: function () { assert.equal(false, true); } 
-        }; // unreachable
+        var client = new fishback.Client(null, null, {
+            request: function () { assert.equal(false, true); }
+        });
 
         var proxy = new fishback.Proxy(cache, client);
 
@@ -32,7 +33,7 @@ var count = 0;
             lib.responseEqual(res, { 
                 statusCode: 504, 
                 headers: { "x-cache": "MISS" }, 
-                body: "" 
+                data: "" 
             });
         });
 
@@ -44,20 +45,23 @@ var count = 0;
     callback(function (cache) {
 
         var response = {
+            url: "/",
+            method: "GET",
             statusCode: 200,
             headers: { "x-cache": "MISS", "cache-control": "public, max-age=60" }, 
             body: [ "Hello, World!\n" ]
         };
 
-        var proxy = new fishback.Proxy(cache, {
-            find: function (req, callback) {
-                var res = new lib.http.ClientResponse(response);
-                res.url = req.url;
-                res.method = req.method;
-                callback(res);
-                res.fire();
+        var client = new fishback.Client(null, null, {
+            request: function (options, callback) {
+                var clientResponse = new lib.http.ClientResponse(response);
+                callback(clientResponse);
+                clientResponse.fire();
+                return new lib.http.ClientRequest();
             }
         });
+
+        var proxy = new fishback.Proxy(cache, client);
 
         lib.step([
 

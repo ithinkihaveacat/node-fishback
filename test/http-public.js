@@ -8,21 +8,23 @@ var fishback = require("../lib/fishback");
 var NOW = 198025200000;
 
 var response = {
+    url: '/',
+    method: 'GET',
     statusCode: 200,
     headers: { "x-cache": "MISS", "cache-control": "max-age=60, public" }, 
-    body: [ "Hello, World" ]
+    data: [ "Hello, World" ]
 };
 
 var expected_miss = [
-    { headers: { "x-cache": "MISS", "cache-control": "max-age=60, public" }, body: "Hello, World" },
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" },
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" }
+    { headers: { "x-cache": "MISS", "cache-control": "max-age=60, public" }, data: "Hello, World" },
+    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, data: "Hello, World" },
+    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, data: "Hello, World" }
 ];
 
 var expected_hit = [
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" },
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" },
-    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, body: "Hello, World" }
+    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, data: "Hello, World" },
+    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, data: "Hello, World" },
+    { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, data: "Hello, World" }
 ];
 
 [lib.getCacheMemory].forEach(function (callback) {
@@ -33,15 +35,16 @@ var expected_hit = [
             return NOW;
         };
 
-        var proxy = new fishback.Proxy(cache, {
-            find: function (req, callback) {
-                var res = new lib.http.ClientResponse(response);
-                res.url = req.url;
-                res.method = req.method;
-                callback(res);
-                res.fire();
+        var client = new fishback.Client(null, null, {
+            request: function (options, callback) {
+                var clientResponse = new lib.http.ClientResponse(response);
+                callback(clientResponse);
+                clientResponse.fire();
+                return new lib.http.ClientRequest();
             }
         });
+
+        var proxy = new fishback.Proxy(cache, client);
 
         lib.step([ 
 

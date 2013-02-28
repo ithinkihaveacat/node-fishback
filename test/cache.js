@@ -20,11 +20,13 @@ list.forEach(function (Cache) {
                 method: "GET"
             });
 
-            c.find(req, function (res) {
+            var res = new lib.http.ServerResponse();
+
+            req.once('reject', function () {
                 count++;
-                assert.equal(res, null);
             });
 
+            c.request(req, res);
             req.fire();
 
             next();
@@ -33,28 +35,30 @@ list.forEach(function (Cache) {
         function (next) {
             var c = new Cache();
 
-            var res = new lib.http.ClientResponse({
+            var clientResponse = new lib.http.ClientResponse({
                 url: "/",
                 method: "GET",
                 statusCode: 200,
                 headers: {
                     "cache-control": "public, max-age=60"
                 },
-                body: [ "Hello, World!" ]
+                data: [ "Hello, World!" ]
             });
 
-            c.add(res);
-            res.fire();
+            c.response(clientResponse);
+            clientResponse.fire();
 
             var req = new lib.http.ServerRequest({
                 url: "/",
                 method: "GET"
             });
 
-            c.find(req, function (res) {
+            var res = new lib.http.ServerResponse();
+            res.once('end', function () {
                 count++;
-                lib.responseEqual(res, { headers: {}, body: "Hello, World!" });
+                lib.responseEqual(res, { headers: {}, data: "Hello, World!" });
             });
+            c.request(req, res);
 
             req.fire();
 
@@ -62,30 +66,35 @@ list.forEach(function (Cache) {
         },
 
         function (next) {
+            var req, res;
+
             var c = new Cache();
 
-            var res = new lib.http.ClientResponse({
+            res = new lib.http.ClientResponse({
                 url: "/foo",
                 method: "GET",
                 statusCode: 200,
                 headers: {
                     "cache-control": "public, max-age=60"
                 },
-                body: [ "Hello, Foo!" ]
+                data: [ "Hello, Foo!" ]
             });
 
-            c.add(res);
+            c.response(res);
             res.fire();
 
-            var req = new lib.http.ServerRequest({
+            req = new lib.http.ServerRequest({
                 url: "/",
                 method: "GET"
             });
 
-            c.find(req, function (res) {
+            res = new lib.http.ServerResponse();
+
+            req.on('reject', function () {
                 count++;
-                assert.equal(res, null);
             });
+
+            c.request(req, res);
 
             req.fire();
 
@@ -105,10 +114,10 @@ list.forEach(function (Cache) {
                 headers: {
                     "cache-control": "public, max-age=60"
                 },
-                body: [ "Hello, Foo!" ]
+                data: [ "Hello, Foo!" ]
             });
 
-            c.add(res);
+            c.response(res);
             res.fire();
 
             res = new lib.http.ClientResponse({
@@ -118,10 +127,10 @@ list.forEach(function (Cache) {
                 headers: {
                     "cache-control": "public, max-age=60"
                 },
-                body: [ "Hello, Bar!" ]
+                data: [ "Hello, Bar!" ]
             });
 
-            c.add(res);
+            c.response(res);
             res.fire();
 
             req = new lib.http.ServerRequest({
@@ -129,10 +138,12 @@ list.forEach(function (Cache) {
                 method: "GET"
             });
 
-            c.find(req, function (res) {
+            res = new lib.http.ServerResponse();
+            res.once('end', function () {
                 count++;
-                lib.responseEqual(res, { headers: {}, body: "Hello, Foo!" });
+                lib.responseEqual(res, { headers: {}, data: "Hello, Foo!" });
             });
+            c.request(req, res);
 
             req.fire();
 
@@ -141,10 +152,13 @@ list.forEach(function (Cache) {
                 method: "GET"
             });
 
-            c.find(req, function (res) {
+            res = new lib.http.ServerResponse();
+            res.once('end', function () {
                 count++;
-                lib.responseEqual(res, { headers: {}, body: "Hello, Bar!" });
+                lib.responseEqual(res, { headers: {}, data: "Hello, Bar!" });
             });
+
+            c.request(req, res);
 
             req.fire();
 
@@ -153,10 +167,13 @@ list.forEach(function (Cache) {
                 method: "GET"
             });
 
-            c.find(req, function (res) {
+            res = new lib.http.ServerResponse();
+            res.once('end', function () {
                 count++;
-                lib.responseEqual(res, { headers: {}, body: "Hello, Foo!" });
+                lib.responseEqual(res, { headers: {}, data: "Hello, Foo!" });
             });
+
+            c.request(req, res);
 
             req.fire();
 
@@ -165,10 +182,12 @@ list.forEach(function (Cache) {
                 method: "GET"
             });
 
-            c.find(req, function (res) {
+            res = new lib.http.ServerResponse();
+            req.once('reject', function () {
                 count++;
-                assert.equal(res, null);
             });
+
+            c.request(req, res);
 
             req.fire();
 

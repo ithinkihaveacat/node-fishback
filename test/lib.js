@@ -114,8 +114,10 @@ ServerRequest.prototype.fire = function () {
 };
 
 function ServerResponse() {
+    this.statusCode = 200;
+    this.method = 'GET';
     this.headers = { };
-    this.body = [ ];
+    this.data = [ ];
 }
 
 util.inherits(ServerResponse, events.EventEmitter);
@@ -128,8 +130,16 @@ ServerResponse.prototype.writeHead = function (statusCode, headers) {
     });
 };
 
+ServerResponse.prototype.setHeader = function (header, value) {
+    this.headers[header] = value;
+};
+
+ServerResponse.prototype.getHeader = function (header) {
+    return this.headers[header];
+};
+
 ServerResponse.prototype.write = function (chunk) {
-    this.body += chunk;
+    this.data += chunk;
 };
 
 ServerResponse.prototype.end = function () {
@@ -141,6 +151,9 @@ function ClientRequest() {
 
 util.inherits(ClientRequest, events.EventEmitter);
 
+ClientRequest.prototype.end = function () {
+};
+
 function ClientResponse(entry) {
     this.url = entry.url;
     this.method = entry.method;
@@ -150,14 +163,14 @@ function ClientResponse(entry) {
         headers[k] = entry.headers[k];
     });
     this.headers = headers;
-    this.body = entry.body || [ ];
+    this.data = entry.data || [ ];
 }
 
 util.inherits(ClientResponse, events.EventEmitter);
 
 ClientResponse.prototype.fire = function () {
     var emit = this.emit.bind(this);
-    this.body.forEach(function (chunk) {
+    this.data.forEach(function (chunk) {
         emit('data', chunk);
     });
     emit('end');

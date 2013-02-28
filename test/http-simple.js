@@ -8,25 +8,28 @@ var assert = require('assert');
 
 var count = 0;
 
-var response = { 
+var response = {
+    url: "/",
+    method: "GET",
     statusCode: 200, 
     headers: { "x-cache": "MISS", "cache-control": "public, max-age=60" }, 
-    body: [ "Hello, World!\n" ]
+    data: [ "Hello, World!\n" ]
 };
 
 [lib.getCacheMemory].forEach(function (callback) {
 
     callback(function (cache) {
 
-        var proxy = new fishback.Proxy(cache, {
-            find: function (req, callback) {
-                var res = new lib.http.ClientResponse(response);
-                res.url = req.url;
-                res.method = req.method;
-                callback(res);
-                res.fire();
+        var client = new fishback.Client(null, null, {
+            request: function (options, callback) {
+                var clientResponse = new lib.http.ClientResponse(response);
+                callback(clientResponse);
+                clientResponse.fire();
+                return new lib.http.ClientRequest();
             }
         });
+
+        var proxy = new fishback.Proxy(cache, client);
 
         lib.step([
 

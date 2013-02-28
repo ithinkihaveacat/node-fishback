@@ -6,8 +6,8 @@ var lib = require("./lib");
 var fishback = require("../lib/fishback");
 var assert = require("assert");
 
-var response = { headers: { "cache-control": "max-age=60, private" }, body: [ "Hello, World" ]};
-var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" }, body: "Hello, World" };
+var response = { statusCode: 200, headers: { "cache-control": "max-age=60, private" }, data: [ "Hello, World" ]};
+var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" }, data: "Hello, World" };
 
 var count = 0;
 
@@ -18,23 +18,27 @@ var count = 0;
         var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
         var res = new lib.http.ServerResponse();
 
-        var proxy = new fishback.Proxy(cache, { 
-            find: function (req, callback) { 
-                var res = new lib.http.ClientResponse(response);
-                res.url = req.url;
-                res.method = req.method;
-                callback(res);
-                res.fire();
+        var client = new fishback.Client(null, null, {
+            request: function (options, callback) {
+                var clientResponse = new lib.http.ClientResponse(response);
+                callback(clientResponse);
+                clientResponse.fire();
+                return new lib.http.ClientRequest();
             }
         });
 
-        proxy.on('request', function (req) {
+        var proxy = new fishback.Proxy(cache, client);
+
+        proxy.on('newRequest', function (req) {
             req.url = "/404";
         });
 
-        proxy.on('response', function (res) {
-            res.headers.foo = "bar";
-            res.headers["cache-control"] = res.headers["cache-control"].replace(/\bprivate\b/, "public");
+        proxy.on('newResponse', function (res) {
+            res.setHeader('foo', 'bar');
+            res.setHeader(
+                'cache-control', 
+                res.getHeader('cache-control').replace(/\bprivate\b/, "public")
+            );
         });
 
         res.on('end', function () {
