@@ -2,11 +2,12 @@
 
 "use strict";
 
-var lib = require('./lib');
-var fishback = require("../lib/fishback");
-var assert = require('assert');
+var DELAY = 500;
 
-var count = 0;
+var lib = require("./lib");
+var assurt = require("./assurt");
+var fishback = require("../lib/fishback");
+var assert = require("assert");
 
 var response = {
     url: "/",
@@ -16,7 +17,7 @@ var response = {
     data: [ "Hello, World!\n" ]
 };
 
-[lib.getCacheMemory].forEach(function (callback) {
+[lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
 
     callback(function (cache) {
 
@@ -34,46 +35,65 @@ var response = {
         lib.step([
 
             function (next) {
-
-                function end() {
-                    count++;
+                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
+                var res = new lib.http.ServerResponse();
+                res.on('end', assurt.calls(function () {
                     assert.equal(res.headers["x-cache"], "MISS");
-                    next();
-                }
-
-                for (var i = 0; i < 1; i++) {
-                    var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                    var res = new lib.http.ServerResponse();
-                    res.on('end', end);
-                    proxy.request(req, res);
-                    req.fire();
-                }
-
+                    setTimeout(next, DELAY);
+                }));
+                proxy.request(req, res);
+                req.fire();
             },
 
             function (next) {
-
-                function end() {
-                    count++;
+                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
+                var res = new lib.http.ServerResponse();
+                res.on('end', assurt.calls(function () {
                     assert.equal(res.headers["x-cache"], "HIT");
-                    next();
-                }
+                    next.call();
+                }));
+                proxy.request(req, res);
+                req.fire();
+            },
 
-                for (var j = 0; j < 4; j++) { // @TODO Use astep, not async safe
-                    var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                    var res = new lib.http.ServerResponse();
-                    res.on('end', end);
-                    proxy.request(req, res);
-                    req.fire();
-                }
+            function (next) {
+                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
+                var res = new lib.http.ServerResponse();
+                res.on('end', assurt.calls(function () {
+                    assert.equal(res.headers["x-cache"], "HIT");
+                    next.call();
+                }));
+                proxy.request(req, res);
+                req.fire();
+            },
 
+            function (next) {
+                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
+                var res = new lib.http.ServerResponse();
+                res.on('end', assurt.calls(function () {
+                    assert.equal(res.headers["x-cache"], "HIT");
+                    next.call();
+                }));
+                proxy.request(req, res);
+                req.fire();
+            },
+
+            function (next) {
+                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
+                var res = new lib.http.ServerResponse();
+                res.on('end', assurt.calls(function () {
+                    assert.equal(res.headers["x-cache"], "HIT");
+                    next.call();
+                }));
+                proxy.request(req, res);
+                req.fire();
+            },
+
+            function (next) {
+                cache.close();
             }
 
         ]);
 
     });
-});
-
-process.on('exit', function () {
-    assert.equal(5, count);
 });

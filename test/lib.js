@@ -151,7 +151,7 @@ ServerResponse.prototype.getHeader = function (header) {
 };
 
 ServerResponse.prototype.write = function (chunk) {
-    this.data += chunk;
+    this.data.push(chunk);
 };
 
 ServerResponse.prototype.end = function () {
@@ -182,7 +182,8 @@ util.inherits(ClientResponse, events.EventEmitter);
 
 ClientResponse.prototype.fire = function () {
     var emit = this.emit.bind(this);
-    this.data.forEach(function (chunk) {
+    var data = this.data;
+    data.forEach(function (chunk) {
         emit('data', chunk);
     });
     emit('end');
@@ -232,22 +233,6 @@ function group(req, callback) {
     });
 }
 
-/**
- * Convenience function for checking whether expected matches actual.
- * actual can contain headers not present in expected, but the reverse
- * is not true.
- * 
- * @param  {object} actual
- * @param  {object} expected
- * @return {boolean}
- */
-function responseEqual(actual, expected) {
-    Object.keys(expected.headers).forEach(function (k) {
-        assert.equal(actual.headers[k], expected.headers[k]);
-    });
-    assert.equal(actual.body, expected.body);
-}
-
 function getCacheMemory(callback) {
     callback(new fishback.CacheMemory());
 }
@@ -257,7 +242,6 @@ function getCacheMemcached(callback) {
 }
 
 function getCacheMongoDb(callback) {
-    // console.log("callback = ", callback);
     var uri = process.env.MONGOLAB_URI || 
       process.env.MONGOHQ_URL || 
       'mongodb://localhost:27017/fishback'; 
@@ -271,7 +255,8 @@ function getCacheMongoDb(callback) {
         function createCollection() {
             client.createCollection(collname, { capped: true, size: 10000 }, function (err, coll) {
                 if (err) { console.error(err); return; }
-                // @TODO http://mongodb.github.com/node-mongodb-native/api-generated/db.html#ensureindex
+                // @TODO Add index to url
+                // http://mongodb.github.com/node-mongodb-native/api-generated/db.html#ensureindex
                 callback(new fishback.CacheMongoDb(coll));
             });
         }
@@ -280,7 +265,7 @@ function getCacheMongoDb(callback) {
             if (err) { console.error(err); return; }
             if (coll.length) {
                 client.dropCollection(collname, function (err) {
-                    if (err) { console.error(err); console.log("got error in drop"); return; }
+                    if (err) { console.error(err); return; }
                     createCollection();
                 });
             } else {
@@ -291,7 +276,7 @@ function getCacheMongoDb(callback) {
     });
 }
 
-[knock, group, amap, step, responseEqual, getCacheMemory, getCacheMongoDb, getCacheMemcached].forEach(function (fn) {
+[knock, group, amap, step, getCacheMemory, getCacheMongoDb, getCacheMemcached].forEach(function (fn) {
     exports[fn.name] = fn;
 });
 

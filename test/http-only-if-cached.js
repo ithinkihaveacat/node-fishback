@@ -3,15 +3,13 @@
 "use strict";
 
 var assert = require('assert');
+var assurt = require("./assurt");
 var lib = require('./lib');
 var fishback = require("../lib/fishback");
 
 var NOW = 198025200000;
-NOW = 0;
 
-var count = 0;
-
-[lib.getCacheMemory].forEach(function (callback) {
+[lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
 
     callback(function (cache) {
 
@@ -28,14 +26,14 @@ var count = 0;
         });
 
         var res = new lib.http.ServerResponse();
-        res.on('end', function () {
-            count++;
-            lib.responseEqual(res, { 
+        res.on('end', assurt.calls(function () {
+            assurt.response(res, { 
                 statusCode: 504, 
                 headers: { "x-cache": "MISS" }, 
                 data: "" 
             });
-        });
+            cache.close();
+        }));
 
         proxy.request(req, res);
         req.fire();
@@ -71,24 +69,22 @@ var count = 0;
                 };
                 var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
                 var res = new lib.http.ServerResponse();
-                res.on('end', function () {
-                    count++;
+                res.on('end', assurt.calls(function () {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "MISS");
                     callback();
-                });
+                }));
                 proxy.request(req, res);
                 req.fire();
             },
             function (callback) {
                 var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
                 var res = new lib.http.ServerResponse();
-                res.on('end', function () {
-                    count++;
+                res.on('end', assurt.calls(function () {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "HIT");
                     callback();
-                });
+                }));
                 proxy.request(req, res);
                 req.fire();
             },
@@ -99,12 +95,11 @@ var count = 0;
                     headers: { "cache-control": "only-if-cached, max-age=60" }
                 });
                 var res = new lib.http.ServerResponse();
-                res.on('end', function () {
-                    count++;
+                res.on('end', assurt.calls(function () {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "HIT");
                     callback();
-                });
+                }));
                 proxy.request(req, res);
                 req.fire();
             },
@@ -118,20 +113,16 @@ var count = 0;
                     headers: { "cache-control": "only-if-cached, max-age=60" }
                 });
                 var res = new lib.http.ServerResponse();
-                res.on('end', function () {
-                    count++;
+                res.on('end', assurt.calls(function () {
                     assert.equal(res.statusCode, 504);
                     assert.equal(res.headers["x-cache"], "MISS");
                     callback();
-                });
+                    cache.close();
+                }));
                 proxy.request(req, res);
                 req.fire();
             }
 
         ]);
     });
-});
-
-process.on('exit', function () {
-    assert.equal(count, 5);
 });

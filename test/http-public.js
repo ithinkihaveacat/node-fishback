@@ -3,9 +3,11 @@
 "use strict";
 
 var lib = require("./lib");
+var assurt = require("./assurt");
 var fishback = require("../lib/fishback");
 
-var NOW = 198025200000;
+var NOW = 0;
+var DELAY = 500;
 
 var response = {
     url: '/',
@@ -27,7 +29,7 @@ var expected_hit = [
     { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, data: "Hello, World" }
 ];
 
-[lib.getCacheMemory].forEach(function (callback) {
+[lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
 
     callback(function (cache) {
 
@@ -51,7 +53,7 @@ var expected_hit = [
             function (callback) {
 
                 Date.prototype.getTime = function() {
-                    return NOW;
+                    return NOW + 0;
                 };
 
                 lib.amap(
@@ -62,10 +64,10 @@ var expected_hit = [
                             method: "GET"
                         });
                         var res = new lib.http.ServerResponse();
-                        res.on('end', function () {
-                            lib.responseEqual(expected_miss[i], res);
-                            next();
-                        });
+                        res.on('end', assurt.calls(function () {
+                            assurt.response(res, expected_miss[i]);
+                            setTimeout(next, DELAY);
+                        }));
                         proxy.request(req, res);
                         req.fire();
                     },
@@ -89,10 +91,10 @@ var expected_hit = [
                             method: "GET"
                         });
                         var res = new lib.http.ServerResponse();
-                        res.on('end', function () {
-                            lib.responseEqual(expected_hit[i], res);
-                            next();
-                        });
+                        res.on('end', assurt.calls(function () {
+                            assurt.response(res, expected_hit[i]);
+                            setTimeout(next, DELAY);
+                        }));
                         proxy.request(req, res);
                         req.fire();
                     },
@@ -117,16 +119,20 @@ var expected_hit = [
                             method: "GET"
                         });
                         var res = new lib.http.ServerResponse();
-                        res.on('end', function () {
-                            lib.responseEqual(expected_miss[i], res);
-                            next();
-                        });
+                        res.on('end', assurt.calls(function () {
+                            assurt.response(res, expected_miss[i]);
+                            setTimeout(next, DELAY);
+                        }));
                         proxy.request(req, res);
                         req.fire();
                     },
                     callback
                 );
 
+            },
+
+            function (callback) {
+                cache.close();
             }
 
         ]);

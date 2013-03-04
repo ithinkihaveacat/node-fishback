@@ -4,8 +4,7 @@
 
 var lib = require("./lib");
 var assert = require("assert");
-
-var count = 0;
+var assurt = require("./assurt");
 
 var list = [ lib.getCacheMemory, lib.getCacheMongoDb ];
 
@@ -39,10 +38,9 @@ list.forEach(function (callback) {
 
         var res = new lib.http.ServerResponse();
 
-        req.once('reject', function () {
-            count++;
+        req.once('reject', assurt.calls(function () {
             cache.close();
-        });
+        }));
 
         cache.request(req, res);
         req.fire();
@@ -74,11 +72,10 @@ list.forEach(function (callback) {
         });
 
         var res = new lib.http.ServerResponse();
-        res.once('end', function () {
-            count++;
-            lib.responseEqual(res, { headers: {}, data: "Hello, World!" });
+        res.once('end', assurt.calls(function () {
+            assurt.response(res, { headers: {}, data: "Hello, World!" });
             cache.close();
-        });
+        }));
 
         setTimeout(function () {
             cache.request(req, res);
@@ -115,10 +112,9 @@ list.forEach(function (callback) {
             cache.close();
         });
 
-        req.on('reject', function () {
-            count++;
+        req.on('reject', assurt.calls(function () {
             cache.close();
-        });
+        }));
 
         setTimeout(function () {
             cache.request(req, res);
@@ -172,10 +168,9 @@ list.forEach(function (callback) {
             req.noReject();
 
             var res = new lib.http.ServerResponse();
-            res.once('end', function () {
-                count++;
-                lib.responseEqual(res, { headers: {}, data: "Hello, Foo!" });
-            });
+            res.once('end', assurt.calls(function () {
+                assurt.response(res, { headers: {}, data: "Hello, Foo!" });
+            }));
 
             setTimeout(function () {
                 cache.request(req, res);
@@ -193,10 +188,9 @@ list.forEach(function (callback) {
             req.noReject();
 
             var res = new lib.http.ServerResponse();
-            res.once('end', function () {
-                count++;
-                lib.responseEqual(res, { headers: {}, data: "Hello, Bar!" });
-            });
+            res.once('end', assurt.calls(function () {
+                assurt.response(res, { headers: {}, data: "Hello, Bar!" });
+            }));
 
             setTimeout(function () {
                 cache.request(req, res);
@@ -214,10 +208,9 @@ list.forEach(function (callback) {
             req.noReject();
 
             var res = new lib.http.ServerResponse();
-            res.once('end', function () {
-                count++;
-                lib.responseEqual(res, { headers: {}, data: "Hello, Foo!" });
-            });
+            res.once('end', assurt.calls(function () {
+                assurt.response(res, { headers: {}, data: "Hello, Foo!" });
+            }));
 
             setTimeout(function () {
                 cache.request(req, res);
@@ -232,10 +225,9 @@ list.forEach(function (callback) {
                 url: "/quux",
                 method: "GET"
             });
-            req.once('reject', function () {
-                count++;
+            req.once('reject', assurt.calls(function () {
                 cache.close();
-            });
+            }));
 
             var res = new lib.http.ServerResponse();
             res.noEnd();
@@ -249,8 +241,4 @@ list.forEach(function (callback) {
 
     }
 
-});
-
-process.on('exit', function () {
-    assert.equal(count, 7 * list.length);
 });

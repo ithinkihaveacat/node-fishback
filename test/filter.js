@@ -2,16 +2,17 @@
 
 "use strict";
 
+var DELAY = 500;
+
 var lib = require("./lib");
+var assurt = require("./assurt");
 var fishback = require("../lib/fishback");
 var assert = require("assert");
 
 var response = { statusCode: 200, headers: { "cache-control": "max-age=60, private" }, data: [ "Hello, World" ]};
 var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" }, data: "Hello, World" };
 
-var count = 0;
-
-[lib.getCacheMemory].forEach(function (callback) {
+[lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
 
     callback(function (cache) {
 
@@ -41,18 +42,15 @@ var count = 0;
             );
         });
 
-        res.on('end', function () {
-            lib.responseEqual(res, expected);
-            count++;
-        });
+        res.on('end', assurt.calls(function () {
+            assurt.response(res, expected);
+        }));
 
         proxy.request(req, res);
         req.fire();
 
+        setTimeout(cache.close.bind(cache), DELAY);
+
     });
     
-});
-
-process.on('exit', function () {
-    assert.equal(count, 1);
 });
