@@ -6,71 +6,132 @@ var lib = require("./lib");
 var assert = require("assert");
 
 var count = 0;
-var list = [ require("../lib/cache.memory") ];
 
-list.forEach(function (Cache) {
+var list = [ lib.getCacheMemory, lib.getCacheMongoDb ];
+
+list.forEach(function (callback) {
 
     lib.step([
-
         function (next) {
-            var c = new Cache();
-
-            var req = new lib.http.ServerRequest({
-                url: "/",
-                method: "GET"
-            });
-
-            var res = new lib.http.ServerResponse();
-
-            req.once('reject', function () {
-                count++;
-            });
-
-            c.request(req, res);
-            req.fire();
-
+            callback(ResponseNotCachedCacheMiss);
             next();
         },
-
         function (next) {
-            var c = new Cache();
-
-            var clientResponse = new lib.http.ClientResponse({
-                url: "/",
-                method: "GET",
-                statusCode: 200,
-                headers: {
-                    "cache-control": "public, max-age=60"
-                },
-                data: [ "Hello, World!" ]
-            });
-
-            c.response(clientResponse);
-            clientResponse.fire();
-
-            var req = new lib.http.ServerRequest({
-                url: "/",
-                method: "GET"
-            });
-
-            var res = new lib.http.ServerResponse();
-            res.once('end', function () {
-                count++;
-                lib.responseEqual(res, { headers: {}, data: "Hello, World!" });
-            });
-            c.request(req, res);
-
-            req.fire();
-
+            callback(ResponseCachedCacheHit);
             next();
         },
-
         function (next) {
-            var req, res;
+            callback(ResponseNotCachedCacheMiss2);
+            next();
+        },
+        function (next) {
+            callback(SomeResponsesCachedSomeCacheHits);
+            next();
+        }
+    ]);
 
-            var c = new Cache();
+    function ResponseNotCachedCacheMiss(cache) {
 
-            res = new lib.http.ClientResponse({
+        var req = new lib.http.ServerRequest({
+            url: "/",
+            method: "GET"
+        });
+
+        var res = new lib.http.ServerResponse();
+
+        req.once('reject', function () {
+            count++;
+            cache.close();
+        });
+
+        cache.request(req, res);
+        req.fire();
+
+    }    
+
+    function ResponseCachedCacheHit(cache) {
+
+        var clientResponse = new lib.http.ClientResponse({
+            url: "/",
+            method: "GET",
+            statusCode: 200,
+            headers: {
+                "cache-control": "public, max-age=60"
+            },
+            data: [ "Hello, World!" ]
+        });
+
+        cache.response(clientResponse);
+        clientResponse.fire();
+
+        var req = new lib.http.ServerRequest({
+            url: "/",
+            method: "GET"
+        });
+        req.on('reject', function () {
+            assert.ok(false, "Request is not supposed to be rejected!");
+            cache.close();
+        });
+
+        var res = new lib.http.ServerResponse();
+        res.once('end', function () {
+            count++;
+            lib.responseEqual(res, { headers: {}, data: "Hello, World!" });
+            cache.close();
+        });
+
+        setTimeout(function () {
+            cache.request(req, res);
+            req.fire();
+        }, 1000);
+
+    }
+
+    function ResponseNotCachedCacheMiss2(cache) {
+
+        var req, res;
+
+        res = new lib.http.ClientResponse({
+            url: "/foo",
+            method: "GET",
+            statusCode: 200,
+            headers: {
+                "cache-control": "public, max-age=60"
+            },
+            data: [ "Hello, Foo!" ]
+        });
+
+        cache.response(res);
+        res.fire();
+
+        req = new lib.http.ServerRequest({
+            url: "/",
+            method: "GET"
+        });
+
+        res = new lib.http.ServerResponse();
+        res.on('end', function () {
+            assert.ok(false, "Response is not supposed to be returned!");
+            cache.close();
+        });
+
+        req.on('reject', function () {
+            count++;
+            cache.close();
+        });
+
+        setTimeout(function () {
+            cache.request(req, res);
+            req.fire();
+        }, 1000);
+
+    };
+
+    function SomeResponsesCachedSomeCacheHits(cache) {
+
+        (function () {
+
+            var res = new lib.http.ClientResponse({
                 url: "/foo",
                 method: "GET",
                 statusCode: 200,
@@ -80,47 +141,14 @@ list.forEach(function (Cache) {
                 data: [ "Hello, Foo!" ]
             });
 
-            c.response(res);
+            cache.response(res);
             res.fire();
 
-            req = new lib.http.ServerRequest({
-                url: "/",
-                method: "GET"
-            });
+        })();
 
-            res = new lib.http.ServerResponse();
+        (function () {
 
-            req.on('reject', function () {
-                count++;
-            });
-
-            c.request(req, res);
-
-            req.fire();
-
-            next();
-        },
-
-        function (next) {
-
-            var req, res;
-
-            var c = new Cache();
-
-            res = new lib.http.ClientResponse({
-                url: "/foo",
-                method: "GET",
-                statusCode: 200,
-                headers: {
-                    "cache-control": "public, max-age=60"
-                },
-                data: [ "Hello, Foo!" ]
-            });
-
-            c.response(res);
-            res.fire();
-
-            res = new lib.http.ClientResponse({
+            var res = new lib.http.ClientResponse({
                 url: "/bar",
                 method: "GET",
                 statusCode: 200,
@@ -130,74 +158,99 @@ list.forEach(function (Cache) {
                 data: [ "Hello, Bar!" ]
             });
 
-            c.response(res);
+            cache.response(res);
             res.fire();
 
-            req = new lib.http.ServerRequest({
+        })();
+
+        (function () {
+
+            var req = new lib.http.ServerRequest({
                 url: "/foo",
                 method: "GET"
             });
+            req.noReject();
 
-            res = new lib.http.ServerResponse();
+            var res = new lib.http.ServerResponse();
             res.once('end', function () {
                 count++;
                 lib.responseEqual(res, { headers: {}, data: "Hello, Foo!" });
             });
-            c.request(req, res);
 
-            req.fire();
+            setTimeout(function () {
+                cache.request(req, res);
+                req.fire();
+            }, 1000);
 
-            req = new lib.http.ServerRequest({
+        })();
+
+        (function () {
+
+            var req = new lib.http.ServerRequest({
                 url: "/bar",
                 method: "GET"
             });
+            req.noReject();
 
-            res = new lib.http.ServerResponse();
+            var res = new lib.http.ServerResponse();
             res.once('end', function () {
                 count++;
                 lib.responseEqual(res, { headers: {}, data: "Hello, Bar!" });
             });
 
-            c.request(req, res);
+            setTimeout(function () {
+                cache.request(req, res);
+                req.fire();
+            }, 2000);
 
-            req.fire();
+        })();
 
-            req = new lib.http.ServerRequest({
+        (function () {
+
+            var req = new lib.http.ServerRequest({
                 url: "/foo",
                 method: "GET"
             });
+            req.noReject();
 
-            res = new lib.http.ServerResponse();
+            var res = new lib.http.ServerResponse();
             res.once('end', function () {
                 count++;
                 lib.responseEqual(res, { headers: {}, data: "Hello, Foo!" });
             });
 
-            c.request(req, res);
+            setTimeout(function () {
+                cache.request(req, res);
+                req.fire();
+            }, 1000);
 
-            req.fire();
+        })();
 
-            req = new lib.http.ServerRequest({
+        (function () {
+
+            var req = new lib.http.ServerRequest({
                 url: "/quux",
                 method: "GET"
             });
-
-            res = new lib.http.ServerResponse();
             req.once('reject', function () {
                 count++;
+                cache.close();
             });
 
-            c.request(req, res);
+            var res = new lib.http.ServerResponse();
+            res.noEnd();
 
-            req.fire();
+            setTimeout(function () {
+                cache.request(req, res);
+                req.fire();
+            }, 2000);
 
-            next();
-        }
+        })();
 
-    ]);
+    }
 
 });
 
 process.on('exit', function () {
-    assert.equal(count, 7);
+    assert.equal(count, 7 * list.length);
 });

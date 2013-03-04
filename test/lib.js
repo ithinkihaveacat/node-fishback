@@ -113,6 +113,12 @@ ServerRequest.prototype.fire = function () {
     emit('end');
 };
 
+ServerRequest.prototype.noReject = function () {
+    this.on('reject', function () {
+        assert.true(false, "Unexpected reject event");
+    });
+};
+
 function ServerResponse() {
     this.statusCode = 200;
     this.method = 'GET';
@@ -121,6 +127,12 @@ function ServerResponse() {
 }
 
 util.inherits(ServerResponse, events.EventEmitter);
+
+ServerResponse.prototype.noEnd = function () {
+    this.on('end', function () {
+        assert.true(false, "Unexpected end event");
+    });
+};
 
 ServerResponse.prototype.writeHead = function (statusCode, headers) {
     this.statusCode = statusCode;
@@ -240,21 +252,46 @@ function getCacheMemory(callback) {
     callback(new fishback.CacheMemory());
 }
 
-function getCacheMongoDB(callback) {
+function getCacheMemcached(callback) {
+    callback(new fishback.CacheMemcached());
+}
+
+function getCacheMongoDb(callback) {
+    // console.log("callback = ", callback);
     var uri = process.env.MONGOLAB_URI || 
       process.env.MONGOHQ_URL || 
       'mongodb://localhost:27017/fishback'; 
 
+    var collname = "test" + (Math.random() + Math.pow(10, -9)).toString().substr(2, 8);
+
     require('mongodb').MongoClient.connect(uri, function (err, client) {
+
         if (err) { console.error(err); return; }
-        client.createCollection("cache", { capped: true, size: 10000 }, function (err, coll) {
+
+        function createCollection() {
+            client.createCollection(collname, { capped: true, size: 10000 }, function (err, coll) {
+                if (err) { console.error(err); return; }
+                // @TODO http://mongodb.github.com/node-mongodb-native/api-generated/db.html#ensureindex
+                callback(new fishback.CacheMongoDb(coll));
+            });
+        }
+
+        client.collectionNames(collname, function (err, coll) {
             if (err) { console.error(err); return; }
-            callback(new fishback.CacheMongoDB(coll));
+            if (coll.length) {
+                client.dropCollection(collname, function (err) {
+                    if (err) { console.error(err); console.log("got error in drop"); return; }
+                    createCollection();
+                });
+            } else {
+                createCollection();
+            }
         });
+
     });
 }
 
-[knock, group, amap, step, responseEqual, getCacheMemory, getCacheMongoDB].forEach(function (fn) {
+[knock, group, amap, step, responseEqual, getCacheMemory, getCacheMongoDb, getCacheMemcached].forEach(function (fn) {
     exports[fn.name] = fn;
 });
 
