@@ -11,9 +11,10 @@ should be considered a bug.)
 ## Design
 
 Fishback is heavily event based, and in particular relies heavily on the four
-event emitters `http.{Client,Server}{Request,Response}`.
+event emitters http.ServerRequest, http.ServerResponse, http.ClientRequest and 
+http.ClientResponse.
 
-### Class: fishback.Proxy
+### Class: fishback.Proxy(cache, client)
 
 #### Event: 'newRequest'
 
@@ -25,7 +26,10 @@ event emitters `http.{Client,Server}{Request,Response}`.
 
 #### proxy.request(serverRequest, serverResponse)
 
-### Class: fishback.Cache
+Listens to http.Server's 'request' event, reading from serverRequest and writing to
+serverResponse.
+
+### Class: fishback.Cache(...)
 
 e.g. `fishback.CacheMemory`, `fishback.CacheMongoDb`.
 
@@ -50,6 +54,23 @@ have been set on the response.
 For populating the cache.  (If the cache fires a `reject` event, Fishback will
 arrange for a "real" HTTP request to be issued; the response from this request
 is then passed to the cache.)
+
+### Class: fishback.Client(backend_hostname, backend_port, http)
+
+Does a real HTTP request, if the request cannot be satisfied by the cache.
+
+#### Event: 'newRequest'
+
+`function (serverRequest) { }`
+
+#### Event: 'newResponse'
+
+`function (serverResponse) { }`
+
+#### client.request(serverRequest, serverResponse)
+
+Fires `endHead` event on `serverResponse` when headers have been set on the 
+response.
 
 ## Bugs/Issues
 
