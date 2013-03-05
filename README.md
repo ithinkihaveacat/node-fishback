@@ -8,7 +8,11 @@ to be RFC2616 compliant (and many of the slightly unusual features like
 things it doesn't do completely correctly.  (Though any variation from RFC2616
 should be considered a bug.)
 
-## Design
+## Example
+
+See the [examples](examples) directory.
+
+## API
 
 Fishback is heavily event based, and in particular relies heavily on the four
 event emitters http.ServerRequest, http.ServerResponse, http.ClientRequest and 
@@ -72,7 +76,7 @@ Does a real HTTP request, if the request cannot be satisfied by the cache.
 Fires `endHead` event on `serverResponse` when headers have been set on the 
 response.
 
-## Bugs/Issues
+## Bugs
 
   * None of the backends are any good.  I'd like to use memcached, but the
     client I was using has bugs.
