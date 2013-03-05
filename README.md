@@ -1,69 +1,77 @@
 [![Build Status](https://travis-ci.org/ithinkihaveacat/node-fishback.png)](https://travis-ci.org/ithinkihaveacat/node-fishback)
 
-## About
+## Overview
 
-Fishback is an simple NodeJS-powered caching HTTP proxy.  It tries pretty hard to be RFC2616 compliant (and many of the slightly unusual features like `only-if-cached` and `max-stale` are supported), but there's probably some things it doesn't do completely correctly.  (Any variation from RFC2616 should be considered a bug.)
+Fishback is an simple NodeJS-powered caching HTTP proxy.  It tries pretty hard
+to be RFC2616 compliant (and many of the slightly unusual features like
+`only-if-cached` and `max-stale` are supported), but there's probably some
+things it doesn't do completely correctly.  (Though any variation from RFC2616
+should be considered a bug.)
 
-## `only-if-cached`
+## Design
 
-If the `Cache-Control` header of a request includes the [`only-if-cached`](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4) header, then the client receives a 504 response, as mandated by the RFC.  However, the proxy also issues the request to the origin server in the background, storing the returned content in the cache if possible so that subsequent requests can be fulfilled by the cache.
+Fishback is heavily event based, and in particular relies heavily on the four
+event emitters `http.{Client,Server}{Request,Response}`.
 
-## Installation
+### Class: fishback.Proxy
 
-The simplest way is with `npm`:
+#### Event: 'newRequest'
 
-    $ npm install fishback
+`function (serverRequest) { }`
 
-This also creates a `fishback` executable that runs on `127.0.0.1:8080`.
+#### Event: 'newResponse'
 
-Note that `fishback` has no dependencies (`npm` does not need to install any other modules), so you can also run it directly from a git working copy:
+`function (serverResponse) { }`
 
-    $ git clone https://github.com/ithinkihaveacat/node-fishback.git
-    $ cd node-fishback
-    $ node run.js
+#### proxy.request(serverRequest, serverResponse)
 
-## Examples
+### Class: fishback.Cache
 
-    # Terminal #1
-    $ fishback-standalone 
-    Proxy server is running on localhost:8080
-    
-    # Terminal #2
-    # Request #1
-    $ http_proxy=http://127.0.0.1:8080/ wget -q -O - http://www.google.co.uk/ > /dev/null
-    $ http_proxy=http://127.0.0.1:8080/ wget -q -O - http://www.google.co.uk/ > /dev/null
+e.g. `fishback.CacheMemory`, `fishback.CacheMongoDb`.
 
-In the output of Terminal #1, you'll see the page being fetched, and then saved to the cache.  (In this case the cache is never used because max-age=0.)
+#### Event: 'newRequest'
 
-    # Request #2
-    $ http_proxy=http://127.0.0.1:8080/ wget -q -O - http://www.google.co.uk/images/logos/ps_logo2a_cp.png > /dev/null
-    $ http_proxy=http://127.0.0.1:8080/ wget -q -O - http://www.google.co.uk/images/logos/ps_logo2a_cp.png > /dev/null
+`function (serverRequest) { }`
 
-In this case the cache is used.
+#### Event: 'newResponse'
 
-    # Request #3
-    $ http_proxy=http://127.0.0.1:8080/ wget -q -O - --header="cache-control: max-stale=60" http://www.google.co.uk/ > /dev/null
+`function (serverResponse) { }`
 
-In this case the cache is again used, because the client specifically permitted a stale entry.
+#### cache.request(serverRequest, serverResponse)
 
-    # Request #4
-    $ http_proxy=http://127.0.0.1:8080/ wget -S -q -O - --header="cache-control: only-if-cached" http://www.bbc.co.uk/favicon.ico > /dev/null
-      HTTP/1.1 504 Gateway Time-out
-      Connection: close
+Fires `reject` event on `serverRequest` if unable to handle the request.  (e.g.
+not cached.)
 
-The client only wanted a response if it was already in the cache, which in this case it wasn't.  However, in this case, even though the 504 response is issued immediately, the full request is also made, in the background, so that subsequent requests will get the benefit of the cache:
+If request not rejected, fires `endHead` event on `serverResponse` when headers
+have been set on the response.
 
-    $ http_proxy=http://127.0.0.1:8080/ wget -S -q -O - --header="cache-control: only-if-cached" http://www.bbc.co.uk/favicon.ico > /dev/null
+#### cache.response(clientResponse)
+
+For populating the cache.  (If the cache fires a `reject` event, Fishback will
+arrange for a "real" HTTP request to be issued; the response from this request
+is then passed to the cache.)
 
 ## Bugs/Issues
 
+  * None of the backends are any good.  I'd like to use memcached, but the
+    client I was using has bugs.
   * There's no HTTPS support.
-  * If the proxy server is able to read from the origin faster than the client can receive data, content needs to be buffered, either by node or the kernel.  (This can be fixed by backing off when `write()` returns false, and resuming only when the ["drain" event](http://nodejs.org/docs/v0.4.1/api/all.html#event_drain_) is triggered.  This is only likely to be a problem if you're streaming very large files through node.)
-  * ETags (and `must-revalidate`) are not supported.  (You don't get incorrect results; you just need retrieve the entire resource from the origin each time.)
+  * If the proxy server is able to read from the origin faster than the client
+    can receive data, content needs to be buffered, either by node or the
+    kernel.  (This can be fixed by backing off when `write()` returns false, and
+    resuming only when the ["drain"
+    event](http://nodejs.org/api/stream.html#stream_event_drain) is
+    triggered.  This is only likely to be a problem if you're streaming very
+    large files through node.)
+  * ETags (and `must-revalidate`) are not supported.  (You don't get incorrect
+    results; you just need retrieve the entire resource from the origin each
+    time.)
 
 ## See Also
 
-If you're only after a proxy (rather than a caching proxy), [node-http-proxy](https://github.com/nodejitsu/node-http-proxy) may be more suitable.
+If you're only after a proxy (rather than a caching proxy),
+[node-http-proxy](https://github.com/nodejitsu/node-http-proxy) may be more
+suitable.
 
 ## Author
 

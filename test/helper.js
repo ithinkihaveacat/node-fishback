@@ -1,20 +1,20 @@
+/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:true, strict:true, undef:true, unused:true, curly:true, node:true, indent:4, maxerr:50, globalstrict:true */
+
+"use strict";
+
 var assert = require('assert');
-var fishback = require('../lib/fishback');
+var fishback = require('../lib/helper');
 var lib = require('./lib');
 
-(function() {
+(function () {
 
     assert.doesNotThrow(function () {
         lib.step([]); 
     });
 
-    assert.throws(function () {
-        lib.step([1]);
-    });
-
 })();
 
-(function() {
+(function () {
 
     var a = [];
 
@@ -36,12 +36,13 @@ var lib = require('./lib');
         function (s, callback) {
             assert.equal(s, "c");
             assert.deepEqual(a, [1, "a", 2, "b", 3]);
+            callback();
         }
     ]);
     
 })();
 
-(function() {
+(function () {
 
     var a = [];
 
@@ -55,6 +56,7 @@ var lib = require('./lib');
                 // This shouldn't be called, because previous function returned error
                 a.push(s);
                 a.push(2);
+                callback();
             }
         ], function (err) {
             assert.equal(err, "ooops");
@@ -64,75 +66,106 @@ var lib = require('./lib');
     
 })();
 
-(function(){
+(function () {
 
     var data = [
         [ { }, false ],
         [ { "cache-control": "public" }, true ],
         [ { "cache-control": "s-maxage=7773, public, foo=bar" }, true ],
+        [ { "cache-control": "no-cache, foo=bar" }, false ],
+        [ { "cache-control": "no-store, foo=bar" }, false ],
         [ { "cache-control": "s-maxage=7773, private, foo=bar" }, false ],
-        [ { "cache-control": "s-maxage=7773, qqq=public, foo=bar" }, false ],
+        [ { "cache-control": "s-maxage=7773, qqq=public, foo=bar" }, true ],
+        [ { "cache-control": "qqq=public, foo=bar" }, false ],
         [ { "expires": "Tue, 17 Jan 2012 00:49:02 GMT", "cache-control": "public, max-age=31536000" }, true ]
     ];
 
     data.forEach(function (d) {
-        assert.equal(fishback.canCache({ headers: d[0] }), d[1]);
+        assert.equal(fishback.canCache({ headers: d[0] }), d[1], require('util').inspect(d));
     });
     
 })();
 
-(function() {
-
-    var getTime = Date.prototype.getTime;
+(function () {
 
     var now = 1295222561275;
-    Date.prototype.getTime = function() { return now; };
+    Date.prototype.getTime = function () { return now; };
 
     var data = [
         [ 
-            { created: now - (180*1000), expires: now + (180*1000) }, 
+            { created: (now - (180 * 1000)), expires: (now + (180 * 1000)) }, 
             { "cache-control": "max-age=120" },
             false 
         ],
         [ 
-            { created: now, expires: now + (180*1000) }, 
+            { created: now, expires: now + (180 * 1000) }, 
             { "cache-control": "max-age=120" },
             true 
         ],
         [ 
-            { created: 0, expires: now - (60*1000) }, 
+            { created: 0, expires: now - (60 * 1000) }, 
             { "cache-control": "max-stale=120" },
             true 
         ],
         [ 
-            { created: 0, expires: now - (60*1000) }, 
+            { created: 0, expires: now - (60 * 1000) }, 
+            { "cache-control": "max-stale=120, max-age=0" },
+            true 
+        ],
+        [ 
+            { created: 0, expires: now - (60 * 1000) }, 
             { "cache-control": "max-stale=30" },
             false 
         ],
         [ 
-            { created: 0, expires: now + (60*1000) }, 
+            { created: 0, expires: now - (60 * 1000) }, 
+            { "cache-control": "max-stale" },
+            true 
+        ],
+        [ 
+            { created: 0, expires: now + (60 * 1000) }, 
             { "cache-control": "min-fresh=30" },
             true 
         ],
         [ 
-            { created: 0, expires: now + (60*1000) },
+            { created: 0, expires: now + (60 * 1000) },
             { "cache-control": "min-fresh=120" },
+            false
+        ],
+        [
+            { created: 0, expires: now - (60 * 1000) },
+            { },
+            false
+        ],
+        [
+            { created: 0, expires: now + (60 * 1000) },
+            { "cache-control": "max-age=0" },
+            false
+        ],
+        [
+            { created: 0, expires: now + (60 * 1000) },
+            { "cache-control": "must-revalidate" },
+            false
+        ],
+        [
+            { created: 0, expires: now - (60 * 1000) },
+            { "cache-control": "jjj" },
             false
         ]
     ];
 
     data.forEach(function (d) {
-        assert.equal(fishback.isFreshEnough(d[0], { headers: d[1] }), d[2]);
-    })
+        assert.equal(fishback.isFreshEnough(d[0], { headers: d[1] }), d[2], require('util').inspect(d));
+    });
 
 })();
 
-(function() {
+(function () {
 
     var getTime = Date.prototype.getTime;
 
     var now = 1295222561275;
-    Date.prototype.getTime = function() { return now; };
+    Date.prototype.getTime = function () { return now; };
 
     var data = [
         [ { }, 1295222561275 ],
@@ -148,7 +181,7 @@ var lib = require('./lib');
     
 })();
 
-(function() {
+(function () {
 
     var data = [
         [ { "cache-control": "jjjj", "foo": "no-cache" }, true ],
@@ -163,11 +196,11 @@ var lib = require('./lib');
 
 })();
 
-(function() {
+(function () {
 
     var data = [
         [ { "cache-control": "jjjj", "foo": "no-cache" }, false ],
-        [ { "cache-control": "no-cachejjj,only-if-cached" }, true ],
+        [ { "cache-control": "no-cachejjj,only-if-cached" }, true ]
     ];
 
     data.forEach(function (d) {
@@ -177,7 +210,7 @@ var lib = require('./lib');
 
 })();
 
-(function() {
+(function () {
 
     var data = [
         [
@@ -219,7 +252,7 @@ var lib = require('./lib');
 
 })();
 
-(function() {
+(function () {
 
     var data = [
         [ "", {} ],
@@ -231,6 +264,60 @@ var lib = require('./lib');
 
     data.forEach(function (d) {
         assert.deepEqual(fishback.parseHeader(d[0]), d[1]);
-    })
+    });
     
+})();
+
+(function () {
+    var calledFoo = false;
+    var calledBar = false;
+    lib.group({
+        foo: function (callback) {
+            process.nextTick(function () {
+                calledFoo = true;
+                callback("qqqq");
+            });
+        },
+        bar: function (callback) {
+            process.nextTick(function () {
+                calledBar = true;
+                callback(1, 2, 3);
+            });
+        }
+    }, function (group) {
+        assert.equal(true, calledFoo);
+        assert.equal(true, calledBar);
+        assert.deepEqual({ foo: "qqqq", bar: [ 1, 2, 3 ]}, group);
+    });
+    assert.equal(false, calledFoo);
+    assert.equal(false, calledBar);
+})();
+
+(function () {
+    var called = false;
+    var n = 0;
+    var knock = lib.knock(n, function () {
+        assert.equal(false, called);
+        called = true;
+    });
+    assert.equal(true, called);
+    knock();
+    assert.equal(true, called);
+})();
+
+(function () {
+    var called = false;
+    var n = 3;
+    var knock = lib.knock(n, function () {
+        assert.equal(false, called);
+        called = true;
+    });
+    assert.equal(false, called);
+    knock();
+    assert.equal(false, called);
+    knock();
+    assert.equal(false, called);
+    knock();
+    assert.equal(true, called);
+    assert.equal(3, n);
 })();
