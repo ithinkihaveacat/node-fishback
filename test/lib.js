@@ -1,15 +1,20 @@
+/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:true, strict:true, undef:true, unused:true, curly:true, node:true, indent:4, maxerr:50, globalstrict:true */
+
+"use strict";
+
 var SERVER_PORT = 9080;
 var PROXY_PORT = SERVER_PORT + 1;
 
 var assert = require("assert");
-var http = require("http");
+var util = require("util");
+var events = require("events");
 var fishback = require("../lib/fishback");
-
-fishback.setVerbose(false);
 
 /**
  * Asynchronous map function.  For each element of arr, fn(element, callback) is
- * called, where callback receives the result.
+ * called, where callback receives the result.  Note that the individual "maps"
+ * are performed sequentially; the result, however, is delivered to a callback,
+ * instead of being returned, and the maps can be asynchronous.
  *
  * Example:
  * 
@@ -29,15 +34,17 @@ function amap(arr, fn, callback) {
 
     // https://gist.github.com/846521
 
-    if (arr.length == 0) {
-        callback([]);
-    } else {
-        fn(arr[0], function(v) {
-            amap(arr.slice(1), fn, function (list) {
-                callback([v].concat(list));
-            })
-        });
-    }
+    process.nextTick(function () {
+        if (arr.length === 0) {
+            callback([]);
+        } else {
+            fn(arr[0], function (v) {
+                amap(arr.slice(1), fn, function (list) {
+                    callback([v].concat(list));
+                });
+            });
+        }
+    });
 
 }
 
@@ -74,131 +81,204 @@ function step(tasks, errback) {
     
     if (tasks && tasks[0]) {
         var args = Array.prototype.slice.call(arguments, 2);
-        tasks[0].apply(null, args.concat(function() { // Note: exception thrown if tasks[0] not a function
-            var args = Array.prototype.slice.call(arguments);
-            if (args[0] && errback) {
-                errback(args[0]); // error returned, abort tasks (Note: exception thrown if errback not a function)
-            } else {
-                step.apply(null, [tasks.slice(1)].concat(errback, args.slice(1)));
-            }
-        }));
+        // Empty the event queue, to ensure isolation between steps
+        process.nextTick(function () {
+            tasks[0].apply(null, args.concat(function () { // Note: exception thrown if tasks[0] not a function
+                var args = Array.prototype.slice.call(arguments);
+                if (args[0] && errback) {
+                    errback(args[0]); // error returned, abort tasks (Note: exception thrown if errback not a function)
+                } else {
+                    step.apply(null, [tasks.slice(1)].concat(errback, args.slice(1)));
+                }
+            }));
+        });
     }
 
 }
 
-/**
- * Creates an HTTP server, and a proxy sitting in front of it.  The server
- * returns response for all requests.
- */
+function ServerRequest(entry) {
+    this.url = entry.url;
+    this.method = entry.method || 'GET';
+    this.headers = entry.headers || { };
+    this.body = entry.body || [ ];
+}
 
-function Service(entry, callback) {
+util.inherits(ServerRequest, events.EventEmitter);
 
-    this.server_port = SERVER_PORT;
-    this.proxy_port  = PROXY_PORT;
-
-    var headers = Object.keys(entry.headers).map(function (k) {
-        return [ k, entry.headers[k] ];
+ServerRequest.prototype.fire = function () {
+    var emit = this.emit.bind(this);
+    this.body.forEach(function (chunk) {
+        emit('data', chunk);
     });
+    emit('end');
+};
 
-    // Kinda ugly hack: listen() doesn't block (I'm pretty sure it did
-    // previously); instead we get a callback when the port is open.  
-    // Unfortunately, we need to wait until both ports are open (on the 
-    // proxy server *and* the backend server, so we have this ugly
-    // closure that essentially waits to be called twice. 
-
-    var block = (function (service) {
-        var i = 2;
-        return function () {
-            if (--i == 0) {
-                callback(service);
-            }
-        }
-    })(this);
-
-    if (!entry.statusCode) {
-        entry.statusCode = 200;
-    }
-
-    this.server = http.createServer(function (req, res) {
-        res.writeHead(entry.statusCode, headers);
-        res.end(entry.body);
+ServerRequest.prototype.noReject = function () {
+    this.on('reject', function () {
+        assert.true(false, "Unexpected reject event");
     });
-    this.server.listen(this.server_port, block);
+};
 
-    this.proxy = fishback.createServer();
-    this.proxy.listen(this.proxy_port, block);
+function ServerResponse() {
+    this.statusCode = 200;
+    this.method = 'GET';
+    this.headers = { };
+    this.data = [ ];
+}
 
+util.inherits(ServerResponse, events.EventEmitter);
+
+ServerResponse.prototype.noEnd = function () {
+    this.on('end', function () {
+        assert.true(false, "Unexpected end event");
+    });
+};
+
+ServerResponse.prototype.writeHead = function (statusCode, headers) {
+    this.statusCode = statusCode;
+    var h = this.headers;
+    Object.keys(headers).forEach(function (k) {
+        h[k] = headers[k];
+    });
+};
+
+ServerResponse.prototype.setHeader = function (header, value) {
+    this.headers[header] = value;
+};
+
+ServerResponse.prototype.getHeader = function (header) {
+    return this.headers[header];
+};
+
+ServerResponse.prototype.write = function (chunk) {
+    this.data.push(chunk);
+};
+
+ServerResponse.prototype.end = function () {
+    this.emit('end');
+};    
+
+function ClientRequest() {
+}
+
+util.inherits(ClientRequest, events.EventEmitter);
+
+ClientRequest.prototype.end = function () {
+};
+
+function ClientResponse(entry) {
+    this.url = entry.url;
+    this.method = entry.method;
+    this.statusCode = entry.statusCode || 200;
+    var headers = { };
+    Object.keys(entry.headers).forEach(function (k) {
+        headers[k] = entry.headers[k];
+    });
+    this.headers = headers;
+    this.data = entry.data || [ ];
+}
+
+util.inherits(ClientResponse, events.EventEmitter);
+
+ClientResponse.prototype.fire = function () {
+    var emit = this.emit.bind(this);
+    var data = this.data;
+    data.forEach(function (chunk) {
+        emit('data', chunk);
+    });
+    emit('end');
+};
+
+exports.http = {
+    ServerRequest: ServerRequest,
+    ServerResponse: ServerResponse,
+    ClientRequest: ClientRequest,
+    ClientResponse: ClientResponse
 };
 
 /**
- * Performs a request count times, collecting the results into an
- * array which is then passed to callback.
+ * Returns a function that, when called n times, in turn calls callback.
  * 
- * @param count number of times to perform the request
- * @param callback called when all requests have completed, with an array of the results
+ * @param  {int}      n        
+ * @param  {Function} callback
+ * @return {Function}         
  */
-
-Service.prototype.request = function(count, callback) {
-
-    var options = {
-        host: '127.0.0.1',
-        port: this.proxy_port,
-        path: 'http://127.0.0.1:' + this.server_port + '/'
-    };
-
-//    console.log("qqqqqq");
-
-    amap(
-        new Array(count), // values not used; this is just to satisfy amap()
-        function (i, callback) {
-            var actual = { statusCode: null, headers: { }, body: "" };
-            http.get(options, function(res) {
-                actual.statusCode = res.statusCode;
-                actual.headers = res.headers;
-                res.on('data', function(chunk) {
-                    actual.body += chunk;
-                });
-                res.on('end', function () {
-                   callback(actual);
-                });
-            });
-        },
-        callback
-    );
-
-};
+function knock(n, callback) {
+    if (n <= 0) {
+        callback();
+        return function () { };
+    } else {
+        return function () {
+            if (--n === 0) {
+                callback();
+            }
+        };
+    }
+}
 
 /**
- * Shuts down (i.e. closes) both the web server and the proxy in front
- * of it.
+ * @param  {object}   req
+ * @param  {Function} callback
  */
-
-Service.prototype.shutdown = function() {
-    this.server.close();
-    this.proxy.close();
-};
-
-/**
- * Creates an HTTP server, and a proxy sitting in front of it.  The server
- * returns response for all requests.
- */
-
-exports.createService = function(response, callback) {
-    return new Service(response, callback);
-};
-
-/**
- * Convenience function for checking whether expected matches actual.
- * actual can contain headers not present in expected, but the reverse
- * is not true.
- */
-
-exports.responseEqual = function(actual, expected) {
-    Object.keys(expected.headers).forEach(function (k) {
-        assert.equal(actual.headers[k], expected.headers[k]);
+function group(req, callback) {
+    var res = { };
+    Object.keys(req).forEach(function (k) {
+        req[k](function () {
+            var args = Array.prototype.slice.call(arguments);
+            res[k] = args.length === 1 ? args[0] : args;
+            if (Object.keys(res).length === Object.keys(req).length) {
+                callback(res);
+            }
+        });
     });
-    assert.equal(actual.body, expected.body);
-};
+}
 
-exports.amap = amap;
-exports.step = step;
+function getCacheMemory(callback) {
+    callback(new fishback.CacheMemory());
+}
+
+function getCacheMemcached(callback) {
+    callback(new fishback.CacheMemcached());
+}
+
+function getCacheMongoDb(callback) {
+    var uri = process.env.MONGOLAB_URI || 
+      process.env.MONGOHQ_URL || 
+      'mongodb://localhost:27017/fishback'; 
+
+    var collname = "test" + (Math.random() + Math.pow(10, -9)).toString().substr(2, 8);
+
+    require('mongodb').MongoClient.connect(uri, function (err, client) {
+
+        if (err) { console.error(err); return; }
+
+        function createCollection() {
+            client.createCollection(collname, { capped: true, size: 10000 }, function (err, coll) {
+                if (err) { console.error(err); return; }
+                // @TODO Add index to url
+                // http://mongodb.github.com/node-mongodb-native/api-generated/db.html#ensureindex
+                callback(new fishback.CacheMongoDb(coll));
+            });
+        }
+
+        client.collectionNames(collname, function (err, coll) {
+            if (err) { console.error(err); return; }
+            if (coll.length) {
+                client.dropCollection(collname, function (err) {
+                    if (err) { console.error(err); return; }
+                    createCollection();
+                });
+            } else {
+                createCollection();
+            }
+        });
+
+    });
+}
+
+[knock, group, amap, step, getCacheMemory, getCacheMongoDb, getCacheMemcached].forEach(function (fn) {
+    exports[fn.name] = fn;
+});
+
+exports.SERVER_PORT = SERVER_PORT;
+exports.PROXY_PORT = PROXY_PORT;
