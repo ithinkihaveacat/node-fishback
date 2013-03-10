@@ -121,7 +121,7 @@ list.forEach(function (callback) {
             req.fire();
         }, 1000);
 
-    };
+    }
 
     function SomeResponsesCachedSomeCacheHits(cache) {
 

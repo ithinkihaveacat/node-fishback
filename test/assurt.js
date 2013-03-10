@@ -1,3 +1,7 @@
+/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:false, strict:true, undef:true, unused:true, curly:true, node:true, indent:4, maxerr:50, globalstrict:true */
+
+"use strict";
+
 var assert = require('assert');
 
 /**
@@ -18,7 +22,7 @@ function response(actual, expected) {
 
 function calls(callback) {
 
-    if (calls.count == undefined) {
+    if (calls.count === undefined) {
         calls.count = 0;
         process.on('exit', function () {
             var n_functions = calls.count > 1 ? (calls.count + " functions") : "1 function";

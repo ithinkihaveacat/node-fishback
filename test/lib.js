@@ -115,7 +115,7 @@ ServerRequest.prototype.fire = function () {
 
 ServerRequest.prototype.noReject = function () {
     this.on('reject', function () {
-        assert.true(false, "Unexpected reject event");
+        assert(false, "Unexpected reject event");
     });
 };
 
@@ -130,7 +130,7 @@ util.inherits(ServerResponse, events.EventEmitter);
 
 ServerResponse.prototype.noEnd = function () {
     this.on('end', function () {
-        assert.true(false, "Unexpected end event");
+        assert(false, "Unexpected end event");
     });
 };
 

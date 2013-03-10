@@ -7,7 +7,6 @@ var DELAY = 500;
 var lib = require("./lib");
 var assurt = require("./assurt");
 var fishback = require("../lib/fishback");
-var assert = require("assert");
 
 var response = { statusCode: 200, headers: { "cache-control": "max-age=60, private" }, data: [ "Hello, World" ]};
 var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" }, data: "Hello, World" };
