@@ -76,7 +76,7 @@ ties them together) are derived from this class.
 
 `function (serverRequest) { }`
 
-  * [`http.ServerRequest`](http://nodejs.org/api/http.html#http_class_http_serverrequest) `serverRequest`
+  * `http.ServerRequest` `serverRequest`
 
 Emitted when a new request has been received.  (At the point the event is
 emitted, only headers are available, though you can of course arrange to listen
@@ -86,7 +86,7 @@ to other events.)
 
 `function (serverResponse) { }`
 
-  * [`http.ServerResponse`](http://nodejs.org/api/http.html#http_class_http_serverresponse) `serverResponse`
+  * `http.ServerResponse` `serverResponse`
 
 Emitted when a new response is being sent.  (At the point the event is emitted,
 only headers are available.  Because of limitations in the
@@ -96,8 +96,8 @@ API (`write()` does not fire any events), it is not possible to observe any
 
 #### cache.request(serverRequest, serverResponse)
 
-  * [`http.ServerRequest`](http://nodejs.org/api/http.html#http_class_http_serverrequest) `serverRequest`
-  * [`http.ServerResponse`](http://nodejs.org/api/http.html#http_class_http_serverresponse) `serverResponse`
+  * `http.ServerRequest` `serverRequest`
+  * `http.ServerResponse` `serverResponse`
 
 Processes a request/response pair.
 
@@ -118,7 +118,7 @@ events they would otherwise have missed).)
 
 #### cache.response(clientResponse)
 
-  * [`http.ClientResponse`](http://nodejs.org/api/http.html#http_http_clientresponse) `clientResponse`
+  * `http.ClientResponse` `clientResponse`
 
 Process a *client* response.
 
