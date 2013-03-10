@@ -6,6 +6,8 @@ var lib = require("./lib");
 var assert = require("assert");
 var assurt = require("./assurt");
 
+var DELAY = 2000;
+
 var list = [ lib.getCacheMemory, lib.getCacheMongoDb ];
 
 list.forEach(function (callback) {
@@ -80,7 +82,7 @@ list.forEach(function (callback) {
         setTimeout(function () {
             cache.request(req, res);
             req.fire();
-        }, 1000);
+        }, DELAY);
 
     }
 
@@ -119,7 +121,7 @@ list.forEach(function (callback) {
         setTimeout(function () {
             cache.request(req, res);
             req.fire();
-        }, 1000);
+        }, DELAY);
 
     }
 
@@ -175,7 +177,7 @@ list.forEach(function (callback) {
             setTimeout(function () {
                 cache.request(req, res);
                 req.fire();
-            }, 1000);
+            }, DELAY);
 
         })();
 
@@ -195,7 +197,7 @@ list.forEach(function (callback) {
             setTimeout(function () {
                 cache.request(req, res);
                 req.fire();
-            }, 2000);
+            }, DELAY);
 
         })();
 
@@ -215,7 +217,7 @@ list.forEach(function (callback) {
             setTimeout(function () {
                 cache.request(req, res);
                 req.fire();
-            }, 1000);
+            }, DELAY);
 
         })();
 
@@ -235,7 +237,7 @@ list.forEach(function (callback) {
             setTimeout(function () {
                 cache.request(req, res);
                 req.fire();
-            }, 2000);
+            }, DELAY);
 
         })();
 
