@@ -9,7 +9,7 @@ var PORT = 8080;
 var BACKEND_HOST = "www.bbc.co.uk";
 var BACKEND_PORT = "80";
 
-var cache = new fishback.CacheMemory();
+var cache = new fishback.Memory();
 cache.on('newRequest', function (req) {
     console.info("CACHE " + req.method + " " + req.url);
 });

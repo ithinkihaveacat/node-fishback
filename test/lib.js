@@ -234,11 +234,11 @@ function group(req, callback) {
 }
 
 function getCacheMemory(callback) {
-    callback(new fishback.CacheMemory());
+    callback(new fishback.Memory());
 }
 
 function getCacheMemcached(callback) {
-    callback(new fishback.CacheMemcached());
+    callback(new fishback.Memcached());
 }
 
 function getCacheMongoDb(callback) {
@@ -257,7 +257,7 @@ function getCacheMongoDb(callback) {
                 if (err) { console.error(err); return; }
                 // @TODO Add index to url
                 // http://mongodb.github.com/node-mongodb-native/api-generated/db.html#ensureindex
-                callback(new fishback.CacheMongoDb(coll));
+                callback(new fishback.MongoDb(coll));
             });
         }
 
