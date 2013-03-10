@@ -30,7 +30,7 @@ var response = {
             }
         });
 
-        var proxy = fishback.createProxy(cache, client);
+        var proxy = fishback.createCachingProxy(cache, client);
 
         lib.step([
 

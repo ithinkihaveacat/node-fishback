@@ -46,7 +46,7 @@ var expected_hit = [
             }
         });
 
-        var proxy = fishback.createProxy(cache, client);
+        var proxy = fishback.createCachingProxy(cache, client);
 
         lib.step([ 
 
