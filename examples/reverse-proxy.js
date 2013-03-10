@@ -6,8 +6,10 @@ var fishback = require("../lib/fishback");
 var http = require("http");
 
 var PORT = 8080;
+var BACKEND_HOST = "www.bbc.co.uk";
+var BACKEND_PORT = "80";
 
-var client = new fishback.Client("www.bbc.co.uk", "80");
+var client = new fishback.Client(BACKEND_HOST, BACKEND_PORT);
 client.on('newRequest', function (req) {
     console.info("CLIENT.newRequest " + req.method + " " + req.url);
 });
