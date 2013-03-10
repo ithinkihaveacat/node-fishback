@@ -28,7 +28,7 @@ var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" 
             }
         });
 
-        var proxy = new fishback.Proxy(cache, client);
+        var proxy = fishback.createProxy(cache, client);
 
         proxy.on('newRequest', function (req) {
             req.url = "/404";

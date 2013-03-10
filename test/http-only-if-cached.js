@@ -17,7 +17,7 @@ var NOW = 198025200000;
             request: function () { assert.equal(false, true); }
         });
 
-        var proxy = new fishback.Proxy(cache, client);
+        var proxy = fishback.createProxy(cache, client);
 
         var req = new lib.http.ServerRequest({
             url: "/",
@@ -59,7 +59,7 @@ var NOW = 198025200000;
             }
         });
 
-        var proxy = new fishback.Proxy(cache, client);
+        var proxy = fishback.createProxy(cache, client);
 
         lib.step([
 
