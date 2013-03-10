@@ -36,6 +36,12 @@ console.log("Listening on port 8000, and proxying to localhost:9000");
 
 For more, see the [examples](examples) directory.
 
+## Installation
+
+````sh
+$ npm install fishback
+````
+
 ## API
 
 Fishback is heavily event based, and in relies heavily on the four event
