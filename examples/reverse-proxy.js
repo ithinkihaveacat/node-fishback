@@ -14,7 +14,7 @@ client.on('newRequest', function (req) {
     console.info("CLIENT.newRequest " + req.method + " " + req.url);
 });
 client.on('newResponse', function (res) {
-    console.info("CLIENT.newResponse " + res.method + " " + res.localUrl);
+    console.info("CLIENT.newResponse " + res.method + " " + res.backendUrl);
 });
 
 var proxy = fishback.createProxy(client);
