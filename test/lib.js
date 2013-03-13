@@ -155,8 +155,7 @@ ServerResponse.prototype.write = function (chunk) {
 };
 
 ServerResponse.prototype.end = function () {
-    this.emit('end');
-};    
+};
 
 function ClientRequest() {
 }
@@ -276,7 +275,23 @@ function getCacheMongoDb(callback) {
     });
 }
 
-[knock, group, amap, step, getCacheMemory, getCacheMongoDb, getCacheMemcached].forEach(function (fn) {
+function getCacheList(callback) {
+
+    function _getCacheList(list) {
+        var head = list[0];
+        var tail = list.slice(1);
+        if (head) {
+            head(function (cache) {
+                callback(cache, _getCacheList.bind(null, tail));
+            });
+        }
+
+    }
+
+    _getCacheList([ getCacheMemory, getCacheMongoDb ]);
+}
+
+[knock, group, amap, step, getCacheList, getCacheMemory, getCacheMongoDb, getCacheMemcached].forEach(function (fn) {
     exports[fn.name] = fn;
 });
 

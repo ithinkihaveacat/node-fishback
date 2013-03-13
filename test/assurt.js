@@ -25,7 +25,7 @@ function calls(callback) {
     if (calls.count === undefined) {
         calls.count = 0;
         process.on('exit', function () {
-            var n_functions = calls.count > 1 ? (calls.count + " functions") : "1 function";
+            var n_functions = calls.count === 1 ? "1 function" : (calls.count + " functions");
             assert.equal(calls.count, 0, "Failed to call " + n_functions);
         });
     }
@@ -34,7 +34,7 @@ function calls(callback) {
 
     return function () {
         calls.count--;
-        callback.call();
+        return callback.apply(null, arguments);
     };
 }
 
