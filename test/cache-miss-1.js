@@ -3,16 +3,17 @@
 "use strict";
 
 var lib = require("./lib");
+var http = require("./http");
 var assurt = require("./assurt");
 
 lib.getCacheList(function (cache, next) {
 
-    var req = new lib.http.ServerRequest({
+    var req = new http.ServerRequest({
         url: "/",
         method: "GET"
     });
 
-    var res = new lib.http.ServerResponse();
+    var res = new http.ServerResponse();
 
     req.once('reject', assurt.calls(function () {
         cache.close();

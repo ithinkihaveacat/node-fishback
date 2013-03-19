@@ -3,6 +3,7 @@
 "use strict";
 
 var lib = require("./lib");
+var http = require("./http");
 var assert = require("assert");
 var assurt = require("./assurt");
 
@@ -10,7 +11,7 @@ lib.getCacheList(function (cache, next) {
 
     var req, res;
 
-    res = new lib.http.ClientResponse({
+    res = new http.ClientResponse({
         url: "/foo",
         method: "GET",
         statusCode: 200,
@@ -23,12 +24,12 @@ lib.getCacheList(function (cache, next) {
     cache.response(res);
     res.fire();
 
-    req = new lib.http.ServerRequest({
+    req = new http.ServerRequest({
         url: "/",
         method: "GET"
     });
 
-    res = new lib.http.ServerResponse();
+    res = new http.ServerResponse();
     res.on('end', function () {
         assert.ok(false, "Response is not supposed to be returned!");
         cache.close();

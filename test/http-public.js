@@ -3,6 +3,7 @@
 "use strict";
 
 var lib = require("./lib");
+var http = require("./http");
 var assurt = require("./assurt");
 var fishback = require("../lib/fishback");
 
@@ -39,10 +40,10 @@ var expected_hit = [
 
         var client = new fishback.Client(null, null, {
             request: function (options, callback) {
-                var clientResponse = new lib.http.ClientResponse(response);
+                var clientResponse = new http.ClientResponse(response);
                 callback(clientResponse);
                 clientResponse.fire();
-                return new lib.http.ClientRequest();
+                return new http.ClientRequest();
             }
         });
 
@@ -59,11 +60,11 @@ var expected_hit = [
                 lib.amap(
                     [0, 1, 2],
                     function (i, next) {
-                        var req = new lib.http.ServerRequest({
+                        var req = new http.ServerRequest({
                             url: "/",
                             method: "GET"
                         });
-                        var res = new lib.http.ServerResponse();
+                        var res = new http.ServerResponse();
                         res.on('end', assurt.calls(function () {
                             assurt.response(res, expected_miss[i]);
                             setTimeout(next, DELAY);
@@ -86,11 +87,11 @@ var expected_hit = [
                 lib.amap(
                     [0, 1, 2],
                     function (i, next) {
-                        var req = new lib.http.ServerRequest({
+                        var req = new http.ServerRequest({
                             url: "/",
                             method: "GET"
                         });
-                        var res = new lib.http.ServerResponse();
+                        var res = new http.ServerResponse();
                         res.on('end', assurt.calls(function () {
                             assurt.response(res, expected_hit[i]);
                             setTimeout(next, DELAY);
@@ -114,11 +115,11 @@ var expected_hit = [
                 lib.amap(
                     [0, 1, 2],
                     function (i, next) {
-                        var req = new lib.http.ServerRequest({
+                        var req = new http.ServerRequest({
                             url: "/",
                             method: "GET"
                         });
-                        var res = new lib.http.ServerResponse();
+                        var res = new http.ServerResponse();
                         res.on('end', assurt.calls(function () {
                             assurt.response(res, expected_miss[i]);
                             setTimeout(next, DELAY);

@@ -5,6 +5,7 @@
 var DELAY = 500;
 
 var lib = require("./lib");
+var http = require("./http");
 var assurt = require("./assurt");
 var fishback = require("../lib/fishback");
 var assert = require("assert");
@@ -23,10 +24,10 @@ var response = {
 
         var client = new fishback.Client(null, null, {
             request: function (options, callback) {
-                var clientResponse = new lib.http.ClientResponse(response);
+                var clientResponse = new http.ClientResponse(response);
                 callback(clientResponse);
                 clientResponse.fire();
-                return new lib.http.ClientRequest();
+                return new http.ClientRequest();
             }
         });
 
@@ -35,8 +36,8 @@ var response = {
         lib.step([
 
             function (next) {
-                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                var res = new lib.http.ServerResponse();
+                var req = new http.ServerRequest({ url: "/", method: "GET" });
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.headers["x-cache"], "MISS");
                     setTimeout(next, DELAY);
@@ -46,8 +47,8 @@ var response = {
             },
 
             function (next) {
-                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                var res = new lib.http.ServerResponse();
+                var req = new http.ServerRequest({ url: "/", method: "GET" });
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.headers["x-cache"], "HIT");
                     next.call();
@@ -57,8 +58,8 @@ var response = {
             },
 
             function (next) {
-                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                var res = new lib.http.ServerResponse();
+                var req = new http.ServerRequest({ url: "/", method: "GET" });
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.headers["x-cache"], "HIT");
                     next.call();
@@ -68,8 +69,8 @@ var response = {
             },
 
             function (next) {
-                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                var res = new lib.http.ServerResponse();
+                var req = new http.ServerRequest({ url: "/", method: "GET" });
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.headers["x-cache"], "HIT");
                     next.call();
@@ -79,8 +80,8 @@ var response = {
             },
 
             function (next) {
-                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                var res = new lib.http.ServerResponse();
+                var req = new http.ServerRequest({ url: "/", method: "GET" });
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.headers["x-cache"], "HIT");
                     next.call();

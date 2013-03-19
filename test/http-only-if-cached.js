@@ -5,6 +5,7 @@
 var assert = require('assert');
 var assurt = require("./assurt");
 var lib = require('./lib');
+var http = require("./http");
 var fishback = require("../lib/fishback");
 
 var NOW = 198025200000;
@@ -19,13 +20,13 @@ var NOW = 198025200000;
 
         var proxy = fishback.createCachingProxy(cache, client);
 
-        var req = new lib.http.ServerRequest({
+        var req = new http.ServerRequest({
             url: "/",
             method: "GET",
             headers: { "cache-control": "only-if-cached" }
         });
 
-        var res = new lib.http.ServerResponse();
+        var res = new http.ServerResponse();
         res.on('end', assurt.calls(function () {
             assurt.response(res, { 
                 statusCode: 504, 
@@ -52,10 +53,10 @@ var NOW = 198025200000;
 
         var client = new fishback.Client(null, null, {
             request: function (options, callback) {
-                var clientResponse = new lib.http.ClientResponse(response);
+                var clientResponse = new http.ClientResponse(response);
                 callback(clientResponse);
                 clientResponse.fire();
-                return new lib.http.ClientRequest();
+                return new http.ClientRequest();
             }
         });
 
@@ -67,8 +68,8 @@ var NOW = 198025200000;
                 Date.prototype.getTime = function() {
                     return NOW;
                 };
-                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                var res = new lib.http.ServerResponse();
+                var req = new http.ServerRequest({ url: "/", method: "GET" });
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "MISS");
@@ -78,8 +79,8 @@ var NOW = 198025200000;
                 req.fire();
             },
             function (callback) {
-                var req = new lib.http.ServerRequest({ url: "/", method: "GET" });
-                var res = new lib.http.ServerResponse();
+                var req = new http.ServerRequest({ url: "/", method: "GET" });
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "HIT");
@@ -89,12 +90,12 @@ var NOW = 198025200000;
                 req.fire();
             },
             function (callback) {
-                var req = new lib.http.ServerRequest({
+                var req = new http.ServerRequest({
                     url: "/",
                     method: "GET",
                     headers: { "cache-control": "only-if-cached, max-age=60" }
                 });
-                var res = new lib.http.ServerResponse();
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "HIT");
@@ -107,12 +108,12 @@ var NOW = 198025200000;
                 Date.prototype.getTime = function() {
                     return NOW + 120000;
                 };
-                var req = new lib.http.ServerRequest({
+                var req = new http.ServerRequest({
                     url: "/",
                     method: "GET",
                     headers: { "cache-control": "only-if-cached, max-age=60" }
                 });
-                var res = new lib.http.ServerResponse();
+                var res = new http.ServerResponse();
                 res.on('end', assurt.calls(function () {
                     assert.equal(res.statusCode, 504);
                     assert.equal(res.headers["x-cache"], "MISS");
