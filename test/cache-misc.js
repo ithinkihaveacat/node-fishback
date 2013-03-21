@@ -6,7 +6,7 @@ var lib = require("./lib");
 var http = require("./http");
 var assurt = require("./assurt");
 
-var DELAY = 100;
+var DELAY = 500;
 
 lib.getCacheList(function (cache, next) {
 
