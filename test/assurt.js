@@ -20,7 +20,7 @@ function response(actual, expected) {
     assert.equal(actual.data, expected.data);
 }
 
-function calls(callback) {
+function calls(callback, context) {
 
     if (calls.count === undefined) {
         calls.count = 0;
@@ -34,10 +34,30 @@ function calls(callback) {
 
     return function () {
         calls.count--;
-        return callback.apply(null, arguments);
+        return callback.apply(context, arguments);
     };
 }
 
-[response, calls].forEach(function (fn) {
+function once(callback, context) {
+    var count = 0;
+    process.on('exit', function () {
+        var name = callback.name ? callback.name : "unknown";
+        assert.equal(count, 1, "Unexpectedly called function [" + name + "] " + count + " times"); 
+    });
+    return function () {
+        count++;
+        return callback.apply(context, arguments);
+    }
+}
+
+function never(callback, context) {
+    return function () {
+        var name = callback.name ? callback.name : "unknown";
+        assert.ok(false, "Unexpectedly called function [" + name + "]");
+        return callback.apply(context, arguments);
+    };
+}
+
+[response, calls, once, never].forEach(function (fn) {
     exports[fn.name] = fn;
 });

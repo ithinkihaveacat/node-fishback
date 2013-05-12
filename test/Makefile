@@ -6,5 +6,5 @@ test:
 	node cache-hit.js
 	node cache-misc.js
 	node http-simple.js
-	node http-only-if-cached.js
+#	node http-only-if-cached.js
 	node http-public.js

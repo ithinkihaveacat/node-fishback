@@ -132,7 +132,10 @@ function getCacheMemory(callback) {
 }
 
 function getCacheMemcached(callback) {
-    callback(new fishback.Memcached());
+    var client = require('memjs').Client.create();
+    client.flush(function () {
+        callback(new fishback.Memcached(client));
+    });
 }
 
 function getCacheMongoDb(callback) {
@@ -180,10 +183,11 @@ function getCacheList(callback) {
                 callback(cache, _getCacheList.bind(null, tail));
             });
         }
-
     }
 
-    _getCacheList([ getCacheMemory, getCacheMongoDb ]);
+    // _getCacheList([ getCacheMemory, getCacheMongoDb ]);
+    // _getCacheList([ getCacheMemory ]);
+    _getCacheList([ getCacheMemcached ]);
 }
 
 [knock, group, amap, step, getCacheList, getCacheMemory, getCacheMongoDb, getCacheMemcached].forEach(function (fn) {

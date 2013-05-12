@@ -10,9 +10,11 @@ var fishback = require("../lib/fishback");
 
 var NOW = 198025200000;
 
-[lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
+lib.getCacheList(function (cache, next) {
 
-    callback(function (cache) {
+// [lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
+
+    (function () {
 
         var client = new fishback.Client(null, null, {
             request: function () { assert.equal(false, true); }
@@ -27,7 +29,7 @@ var NOW = 198025200000;
         });
 
         var res = new http.ServerResponse();
-        res.on('end', assurt.calls(function () {
+        res.on('end', assurt.once(function F1() {
             assurt.response(res, { 
                 statusCode: 504, 
                 headers: { "x-cache": "MISS" }, 
@@ -39,9 +41,9 @@ var NOW = 198025200000;
         proxy.request(req, res);
         req.fire();
 
-    });
+    })();
 
-    callback(function (cache) {
+    (function () {
 
         var response = {
             url: "/",
@@ -70,7 +72,7 @@ var NOW = 198025200000;
                 };
                 var req = new http.ServerRequest({ url: "/", method: "GET" });
                 var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
+                res.on('end', assurt.once(function F2() {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "MISS");
                     callback();
@@ -81,7 +83,7 @@ var NOW = 198025200000;
             function (callback) {
                 var req = new http.ServerRequest({ url: "/", method: "GET" });
                 var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
+                res.on('end', assurt.once(function F3() {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "HIT");
                     callback();
@@ -96,7 +98,7 @@ var NOW = 198025200000;
                     headers: { "cache-control": "only-if-cached, max-age=60" }
                 });
                 var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
+                res.on('end', assurt.once(function F4() {
                     assert.equal(res.statusCode, 200);
                     assert.equal(res.headers["x-cache"], "HIT");
                     callback();
@@ -114,7 +116,7 @@ var NOW = 198025200000;
                     headers: { "cache-control": "only-if-cached, max-age=60" }
                 });
                 var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
+                res.on('end', assurt.once(function F5() {
                     assert.equal(res.statusCode, 504);
                     assert.equal(res.headers["x-cache"], "MISS");
                     callback();
@@ -125,5 +127,7 @@ var NOW = 198025200000;
             }
 
         ]);
-    });
+    })();
+
+    next();
 });

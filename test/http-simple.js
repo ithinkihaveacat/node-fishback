@@ -18,83 +18,80 @@ var response = {
     data: [ "Hello, World!\n" ]
 };
 
-[lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
+lib.getCacheList(function (cache, next) {
 
-    callback(function (cache) {
-
-        var client = new fishback.Client(null, null, {
-            request: function (options, callback) {
-                var clientResponse = new http.ClientResponse(response);
-                callback(clientResponse);
-                clientResponse.fire();
-                return new http.ClientRequest();
-            }
-        });
-
-        var proxy = fishback.createCachingProxy(cache, client);
-
-        lib.step([
-
-            function (next) {
-                var req = new http.ServerRequest({ url: "/", method: "GET" });
-                var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
-                    assert.equal(res.headers["x-cache"], "MISS");
-                    setTimeout(next, DELAY);
-                }));
-                proxy.request(req, res);
-                req.fire();
-            },
-
-            function (next) {
-                var req = new http.ServerRequest({ url: "/", method: "GET" });
-                var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
-                    assert.equal(res.headers["x-cache"], "HIT");
-                    next.call();
-                }));
-                proxy.request(req, res);
-                req.fire();
-            },
-
-            function (next) {
-                var req = new http.ServerRequest({ url: "/", method: "GET" });
-                var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
-                    assert.equal(res.headers["x-cache"], "HIT");
-                    next.call();
-                }));
-                proxy.request(req, res);
-                req.fire();
-            },
-
-            function (next) {
-                var req = new http.ServerRequest({ url: "/", method: "GET" });
-                var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
-                    assert.equal(res.headers["x-cache"], "HIT");
-                    next.call();
-                }));
-                proxy.request(req, res);
-                req.fire();
-            },
-
-            function (next) {
-                var req = new http.ServerRequest({ url: "/", method: "GET" });
-                var res = new http.ServerResponse();
-                res.on('end', assurt.calls(function () {
-                    assert.equal(res.headers["x-cache"], "HIT");
-                    next.call();
-                }));
-                proxy.request(req, res);
-                req.fire();
-            },
-
-            function (next) {
-                cache.close();
-            }
-
-        ]);
-
+    var client = new fishback.Client(null, null, {
+        request: function (options, callback) {
+            var clientResponse = new http.ClientResponse(response);
+            callback(clientResponse);
+            clientResponse.fire();
+            return new http.ClientRequest();
+        }
     });
+
+    var proxy = fishback.createCachingProxy(cache, client);
+
+    lib.step([
+
+        function (next) {
+            var req = new http.ServerRequest({ url: "/", method: "GET" });
+            var res = new http.ServerResponse();
+            res.on('end', assurt.calls(function () {
+                assert.equal(res.headers["x-cache"], "MISS");
+                setTimeout(next, DELAY);
+            }));
+            proxy.request(req, res);
+            req.fire();
+        },
+
+        function (next) {
+            var req = new http.ServerRequest({ url: "/", method: "GET" });
+            var res = new http.ServerResponse();
+            res.on('end', assurt.calls(function () {
+                assert.equal(res.headers["x-cache"], "HIT");
+                next.call();
+            }));
+            proxy.request(req, res);
+            req.fire();
+        },
+
+        function (next) {
+            var req = new http.ServerRequest({ url: "/", method: "GET" });
+            var res = new http.ServerResponse();
+            res.on('end', assurt.calls(function () {
+                assert.equal(res.headers["x-cache"], "HIT");
+                next.call();
+            }));
+            proxy.request(req, res);
+            req.fire();
+        },
+
+        function (next) {
+            var req = new http.ServerRequest({ url: "/", method: "GET" });
+            var res = new http.ServerResponse();
+            res.on('end', assurt.calls(function () {
+                assert.equal(res.headers["x-cache"], "HIT");
+                next.call();
+            }));
+            proxy.request(req, res);
+            req.fire();
+        },
+
+        function (next) {
+            var req = new http.ServerRequest({ url: "/", method: "GET" });
+            var res = new http.ServerResponse();
+            res.on('end', assurt.calls(function () {
+                assert.equal(res.headers["x-cache"], "HIT");
+                next.call();
+            }));
+            proxy.request(req, res);
+            req.fire();
+        },
+
+        function (next) {
+            cache.close();
+        }
+
+    ]);
+
 });

@@ -30,115 +30,110 @@ var expected_hit = [
     { headers: { "x-cache": "HIT",  "cache-control": "max-age=60, public" }, data: "Hello, World" }
 ];
 
-[lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
+lib.getCacheList(function (cache) {
 
-    callback(function (cache) {
+    Date.prototype.getTime = function() {
+        return NOW;
+    };
 
-        Date.prototype.getTime = function() {
-            return NOW;
-        };
-
-        var client = new fishback.Client(null, null, {
-            request: function (options, callback) {
-                var clientResponse = new http.ClientResponse(response);
-                callback(clientResponse);
-                clientResponse.fire();
-                return new http.ClientRequest();
-            }
-        });
-
-        var proxy = fishback.createCachingProxy(cache, client);
-
-        lib.step([ 
-
-            function (callback) {
-
-                Date.prototype.getTime = function() {
-                    return NOW + 0;
-                };
-
-                lib.amap(
-                    [0, 1, 2],
-                    function (i, next) {
-                        var req = new http.ServerRequest({
-                            url: "/",
-                            method: "GET"
-                        });
-                        var res = new http.ServerResponse();
-                        res.on('end', assurt.calls(function () {
-                            assurt.response(res, expected_miss[i]);
-                            setTimeout(next, DELAY);
-                        }));
-                        proxy.request(req, res);
-                        req.fire();
-                    },
-                    callback
-                );
-
-            },
-
-            // No cache misses
-            function (callback) {
-
-                Date.prototype.getTime = function() {
-                    return NOW + 30000;
-                };
-
-                lib.amap(
-                    [0, 1, 2],
-                    function (i, next) {
-                        var req = new http.ServerRequest({
-                            url: "/",
-                            method: "GET"
-                        });
-                        var res = new http.ServerResponse();
-                        res.on('end', assurt.calls(function () {
-                            assurt.response(res, expected_hit[i]);
-                            setTimeout(next, DELAY);
-                        }));
-                        proxy.request(req, res);
-                        req.fire();
-                    },
-                    callback
-                );
-
-            },
-
-            // Should get a cache miss the first time, because we're 120 seconds
-            // on.
-            function (callback) {
-
-                Date.prototype.getTime = function() {
-                    return NOW + 120000;
-                };
-
-                lib.amap(
-                    [0, 1, 2],
-                    function (i, next) {
-                        var req = new http.ServerRequest({
-                            url: "/",
-                            method: "GET"
-                        });
-                        var res = new http.ServerResponse();
-                        res.on('end', assurt.calls(function () {
-                            assurt.response(res, expected_miss[i]);
-                            setTimeout(next, DELAY);
-                        }));
-                        proxy.request(req, res);
-                        req.fire();
-                    },
-                    callback
-                );
-
-            },
-
-            function (callback) {
-                cache.close();
-            }
-
-        ]);
-
+    var client = new fishback.Client(null, null, {
+        request: function (options, callback) {
+            var clientResponse = new http.ClientResponse(response);
+            callback(clientResponse);
+            clientResponse.fire();
+            return new http.ClientRequest();
+        }
     });
 
-});
+    var proxy = fishback.createCachingProxy(cache, client);
 
+    lib.step([ 
+
+        function (callback) {
+
+            Date.prototype.getTime = function() {
+                return NOW + 0;
+            };
+
+            lib.amap(
+                [0, 1, 2],
+                function (i, next) {
+                    var req = new http.ServerRequest({
+                        url: "/",
+                        method: "GET"
+                    });
+                    var res = new http.ServerResponse();
+                    res.on('end', assurt.calls(function () {
+                        assurt.response(res, expected_miss[i]);
+                        setTimeout(next, DELAY);
+                    }));
+                    proxy.request(req, res);
+                    req.fire();
+                },
+                callback
+            );
+
+        },
+
+        // No cache misses
+        function (callback) {
+
+            Date.prototype.getTime = function() {
+                return NOW + 30000;
+            };
+
+            lib.amap(
+                [0, 1, 2],
+                function (i, next) {
+                    var req = new http.ServerRequest({
+                        url: "/",
+                        method: "GET"
+                    });
+                    var res = new http.ServerResponse();
+                    res.on('end', assurt.calls(function () {
+                        assurt.response(res, expected_hit[i]);
+                        setTimeout(next, DELAY);
+                    }));
+                    proxy.request(req, res);
+                    req.fire();
+                },
+                callback
+            );
+
+        },
+
+        // Should get a cache miss the first time, because we're 120 seconds
+        // on.
+        function (callback) {
+
+            Date.prototype.getTime = function() {
+                return NOW + 120000;
+            };
+
+            lib.amap(
+                [0, 1, 2],
+                function (i, next) {
+                    var req = new http.ServerRequest({
+                        url: "/",
+                        method: "GET"
+                    });
+                    var res = new http.ServerResponse();
+                    res.on('end', assurt.calls(function () {
+                        assurt.response(res, expected_miss[i]);
+                        setTimeout(next, DELAY);
+                    }));
+                    proxy.request(req, res);
+                    req.fire();
+                },
+                callback
+            );
+
+        },
+
+        function (callback) {
+            cache.close();
+        }
+
+    ]);
+
+});

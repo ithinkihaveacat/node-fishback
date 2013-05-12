@@ -10,6 +10,8 @@ var DELAY = 500;
 
 lib.getCacheList(function (cache, next) {
 
+    // Add resource #1 to cache
+
     (function () {
 
         var res = new http.ClientResponse({
@@ -26,6 +28,8 @@ lib.getCacheList(function (cache, next) {
         res.fire();
 
     })();
+
+    // Add resource #2 to cache
 
     (function () {
 
@@ -50,10 +54,10 @@ lib.getCacheList(function (cache, next) {
             url: "/foo",
             method: "GET"
         });
-        req.noReject();
+        req.noReject("A");
 
         var res = new http.ServerResponse();
-        res.once('end', assurt.calls(function () {
+        res.once('end', assurt.once(function F1() {
             assurt.response(res, { headers: {}, data: "Hello, Foo!" });
         }));
 
@@ -70,10 +74,10 @@ lib.getCacheList(function (cache, next) {
             url: "/bar",
             method: "GET"
         });
-        req.noReject();
+        req.noReject("B");
 
         var res = new http.ServerResponse();
-        res.once('end', assurt.calls(function () {
+        res.once('end', assurt.once(function F2() {
             assurt.response(res, { headers: {}, data: "Hello, Bar!" });
         }));
 
@@ -90,10 +94,10 @@ lib.getCacheList(function (cache, next) {
             url: "/foo",
             method: "GET"
         });
-        req.noReject();
+        req.noReject("C");
 
         var res = new http.ServerResponse();
-        res.once('end', assurt.calls(function () {
+        res.once('end', assurt.once(function F3() {
             assurt.response(res, { headers: {}, data: "Hello, Foo!" });
         }));
 
@@ -110,7 +114,7 @@ lib.getCacheList(function (cache, next) {
             url: "/quux",
             method: "GET"
         });
-        req.once('reject', assurt.calls(function () {
+        req.once('reject', assurt.once(function F4() {
             cache.close();
             next();
         }));
@@ -121,8 +125,10 @@ lib.getCacheList(function (cache, next) {
         setTimeout(function () {
             cache.request(req, res);
             req.fire();
-        }, DELAY);
+        }, 2 * DELAY);
 
     })();
+
+    next();
 
 });

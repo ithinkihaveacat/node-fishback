@@ -26,10 +26,9 @@ lib.getCacheList(function (cache, next) {
         url: "/",
         method: "GET"
     });
-    req.on('reject', function () {
-        assert.ok(false, "Request is not supposed to be rejected!");
+    req.on('reject', assurt.never(function q1() {
         cache.close();
-    });
+    }));
 
     var res = new http.ServerResponse();
     res.once('end', assurt.calls(function () {

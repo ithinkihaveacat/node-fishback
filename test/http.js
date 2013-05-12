@@ -23,9 +23,9 @@ ServerRequest.prototype.fire = function () {
     emit('end');
 };
 
-ServerRequest.prototype.noReject = function () {
+ServerRequest.prototype.noReject = function (s) {
     this.on('reject', function () {
-        assert(false, "Unexpected reject event");
+        assert(false, "Unexpected reject event: " + s);
     });
 };
 
