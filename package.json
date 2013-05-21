@@ -8,8 +8,7 @@
     "bugs": "https://github.com/ithinkihaveacat/node-fishback/issues",
     "main": "./lib/fishback",
     "dependencies": {
-      "memjs": "git://github.com/alevy/memjs.git#7f6e7f4e6b26d38fb80399158277f41d2819fb48",
-      "mongodb": ">=1.2.13"
+      "memjs": "git://github.com/alevy/memjs.git#7f6e7f4e6b26d38fb80399158277f41d2819fb48"
     },    
     "engines": {
         "node": ">=0.8"
