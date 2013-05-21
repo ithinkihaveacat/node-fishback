@@ -20,12 +20,12 @@ function response(actual, expected) {
     assert.equal(actual.data, expected.data);
 }
 
-function calls(callback) {
+function calls(callback, context) {
 
     if (calls.count === undefined) {
         calls.count = 0;
         process.on('exit', function () {
-            var n_functions = calls.count > 1 ? (calls.count + " functions") : "1 function";
+            var n_functions = calls.count === 1 ? "1 function" : (calls.count + " functions");
             assert.equal(calls.count, 0, "Failed to call " + n_functions);
         });
     }
@@ -34,10 +34,32 @@ function calls(callback) {
 
     return function () {
         calls.count--;
-        callback.call();
+        return callback.apply(context, arguments);
     };
 }
 
-[response, calls].forEach(function (fn) {
+function once(callback, context) {
+    var count = 0;
+    process.on('exit', function () {
+        var name = callback.name ? callback.name : "unknown";
+        assert.equal(count, 1, "Unexpectedly called function [" + name + "] " + count + " times"); 
+    });
+    return function () {
+        count++;
+        return callback.apply(context, arguments);
+    };
+}
+
+function never(callback, context) {
+    return function () {
+        var name = callback.name ? callback.name : "unknown";
+        assert.ok(false, "Unexpectedly called function [" + name + "]");
+        return callback.apply(context, arguments);
+    };
+}
+
+process.setMaxListeners(20);
+
+[response, calls, once, never].forEach(function (fn) {
     exports[fn.name] = fn;
 });
