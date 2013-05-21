@@ -44,7 +44,7 @@ $ npm install fishback
 
 ## API
 
-Fishback is heavily event based, and in relies heavily on the four event
+Fishback is heavily event based, and it relies heavily on the four event
 emitters `http.ServerRequest`, `http.ServerResponse`, `http.ClientRequest` and
 `http.ClientResponse`.
 
@@ -160,8 +160,6 @@ Derived from `fishback.Handler`.
 
 ## Bugs
 
-  * None of the backends are any good.  I'd like to use memcached, but the
-    client I was using has bugs.
   * There's no HTTPS support.
   * If the proxy server is able to read from the origin faster than the client
     can receive data, content needs to be buffered, either by node or the
