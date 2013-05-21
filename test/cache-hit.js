@@ -4,7 +4,6 @@
 
 var lib = require("./lib");
 var http = require("./http");
-var assert = require("assert");
 var assurt = require("./assurt");
 
 lib.getCacheList(function (cache, next) {

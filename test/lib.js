@@ -185,8 +185,6 @@ function getCacheList(callback) {
         }
     }
 
-    // _getCacheList([ getCacheMemory, getCacheMongoDb ]);
-    // _getCacheList([ getCacheMemory ]);
     _getCacheList([ getCacheMemory, getCacheMemcached ]);
 }
 

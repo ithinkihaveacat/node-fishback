@@ -18,7 +18,7 @@ var response = {
     data: [ "Hello, World!\n" ]
 };
 
-lib.getCacheList(function (cache, next) {
+lib.getCacheList(function (cache) {
 
     var client = new fishback.Client(null, null, {
         request: function (options, callback) {
@@ -88,7 +88,7 @@ lib.getCacheList(function (cache, next) {
             req.fire();
         },
 
-        function (next) {
+        function () {
             cache.close();
         }
 

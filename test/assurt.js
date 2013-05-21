@@ -47,7 +47,7 @@ function once(callback, context) {
     return function () {
         count++;
         return callback.apply(context, arguments);
-    }
+    };
 }
 
 function never(callback, context) {

@@ -10,7 +10,7 @@ var fishback = require("../lib/fishback");
 
 var NOW = 198025200000;
 
-lib.getCacheList(function (cache, next) {
+lib.getCacheList(function (cache) {
 
     (function () {
 

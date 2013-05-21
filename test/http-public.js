@@ -130,7 +130,7 @@ lib.getCacheList(function (cache) {
 
         },
 
-        function (callback) {
+        function () {
             cache.close();
         }
 

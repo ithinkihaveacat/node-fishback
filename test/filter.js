@@ -12,7 +12,7 @@ var fishback = require("../lib/fishback");
 var response = { statusCode: 200, headers: { "cache-control": "max-age=60, private" }, data: [ "Hello, World" ]};
 var expected = { headers: { "foo": "bar", "cache-control": "max-age=60, public" }, data: "Hello, World" };
 
-lib.getCacheList(function (cache, next) {
+lib.getCacheList(function (cache) {
 
     var req = new http.ServerRequest({ url: "/", method: "GET" });
     var res = new http.ServerResponse();
