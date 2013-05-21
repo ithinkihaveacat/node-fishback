@@ -12,8 +12,6 @@ var NOW = 198025200000;
 
 lib.getCacheList(function (cache, next) {
 
-// [lib.getCacheMemory, lib.getCacheMongoDb].forEach(function (callback) {
-
     (function () {
 
         var client = new fishback.Client(null, null, {
@@ -42,6 +40,10 @@ lib.getCacheList(function (cache, next) {
         req.fire();
 
     })();
+
+});
+
+lib.getCacheList(function (cache, next) {
 
     (function () {
 

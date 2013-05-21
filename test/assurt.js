@@ -58,6 +58,8 @@ function never(callback, context) {
     };
 }
 
+process.setMaxListeners(20);
+
 [response, calls, once, never].forEach(function (fn) {
     exports[fn.name] = fn;
 });

@@ -187,7 +187,7 @@ function getCacheList(callback) {
 
     // _getCacheList([ getCacheMemory, getCacheMongoDb ]);
     // _getCacheList([ getCacheMemory ]);
-    _getCacheList([ getCacheMemcached ]);
+    _getCacheList([ getCacheMemory, getCacheMemcached ]);
 }
 
 [knock, group, amap, step, getCacheList, getCacheMemory, getCacheMongoDb, getCacheMemcached].forEach(function (fn) {
