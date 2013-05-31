@@ -2,7 +2,7 @@
     "name": "fishback",
     "author": "Michael Stillwell <mjs@beebo.org> (http://beebo.org/)",
     "description": "Simple RFC2616-compliant caching proxy server",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "homepage": "https://github.com/ithinkihaveacat/node-fishback",
     "repository": "git://github.com/ithinkihaveacat/node-fishback.git",
     "bugs": "https://github.com/ithinkihaveacat/node-fishback/issues",
