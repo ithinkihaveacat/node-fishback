@@ -11,7 +11,7 @@
       "memjs": ">=0.6.0"
     },    
     "engines": {
-        "node": ">=0.8"
+        "node": ">=0.8 <0.10"
     },
     "scripts": {
         "test": "cd test && make"
